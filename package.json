@@ -1,8 +1,8 @@
 {
-  "name": "polkadot-watcher",
-  "version": "1.0.6",
-  "description": "Monitor events on Polkadot networks",
-  "repository": "git@github.com:w3f/polkadot-watcher.git",
+  "name": "polkadot-watcher-csv-exporter",
+  "version": "0.1.0",
+  "description": "Monitor events on Polkadot networks and export a csv dataset",
+  "repository": "git@github.com:w3f/polkadot-watcher-csv-exporter.git",
   "author": "W3F Infrastructure Team <devops@web3.foundation>",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -20,8 +20,8 @@
     "start": "node ./dist/index.js start"
   },
   "dependencies": {
-    "@polkadot/api": "1.24.1",
-    "@polkadot/types": "1.24.1",
+    "@polkadot/api": "^1.32.1",
+    "@polkadot/types": "^1.32.1",
     "@w3f/config": "^0.1.1",
     "@w3f/logger": "^0.4.0",
     "commander": "^4.0.0",
