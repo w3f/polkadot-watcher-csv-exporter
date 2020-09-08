@@ -10,6 +10,15 @@ jobs:
           command: |
             helm lint ./charts/polkadot-watcher-csv-exporter
 
+  yarnLint:
+    docker:
+      - image: web3f/ci-commons:v2.4.0
+    steps:
+      - checkout
+      - run:
+          command: |
+            yarn lint     
+
   buildImage:
     docker:
       - image: web3f/ci-commons:v2.4.0
@@ -47,6 +56,10 @@ workflows:
           filters:
             tags:
               only: /.*/
+      - yarnLint:
+          filters:
+            tags:
+              only: /.*/        
       - buildImage:
           filters:
             tags:
@@ -62,6 +75,7 @@ workflows:
           requires:
             - buildImage
             - helmLint
+            - yarnLint
       - publishChart:
           filters:
             branches:
@@ -71,3 +85,4 @@ workflows:
           requires:
             - buildImage
             - helmLint
+            - yarnLint
