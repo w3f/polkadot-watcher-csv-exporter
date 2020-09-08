@@ -15,8 +15,6 @@
     "build": "tsc --build tsconfig.json",
     "prepare": "yarn build",
     "pretest": "yarn lint",
-    "test": "mocha --timeout 60000 --require ts-node/register --exit test/*.ts test/**/*.ts",
-    "e2e-test": "mocha --timeout 300000 --require ts-node/register --exit e2e-test/**/*.ts",
     "start": "node ./dist/index.js start"
   },
   "dependencies": {

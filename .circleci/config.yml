@@ -1,17 +1,6 @@
 version: 2
 
 jobs:
-  unitTest:
-    docker:
-      - image: web3f/node-dind:v0.3.0
-      - image: parity/polkadot:v0.8.23 
-        name: polkadot
-        command: --chain=kusama-dev --ws-port 11000 --alice --ws-external --rpc-methods=Unsafe --rpc-cors=all
-    steps:
-      - checkout
-      - run: yarn
-      - run: yarn test
-
   helmLint:
     docker:
       - image: web3f/ci-commons:v2.4.0
@@ -19,7 +8,7 @@ jobs:
       - checkout
       - run:
           command: |
-            helm lint ./charts/polkadot-watcher
+            helm lint ./charts/polkadot-watcher-csv-exporter
 
   buildImage:
     docker:
@@ -29,39 +18,7 @@ jobs:
       - setup_remote_docker
       - run:
           command: |
-            /scripts/build-image.sh web3f/polkadot-watcher .
-
-  integrationTests:
-    docker:
-      - image: web3f/ci-commons:v2.4.0
-    steps:
-      - checkout
-      - setup_remote_docker
-      - run:
-          description: run integration tests
-          command: |
-            /scripts/integration-tests.sh
-
-  testPrometheusRules:
-    docker:
-      - image: web3f/ci-commons:v2.4.0
-    steps:
-      - checkout
-      - run:
-          name: Install missing dependencies
-          command: |
-            YQ_VER=3.3.0
-            wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/${YQ_VER}/yq_linux_amd64
-            chmod +x /usr/local/bin/yq
-            
-            PROM_VER=2.18.1
-            wget -O /tmp/prometheus.tgz https://github.com/prometheus/prometheus/releases/download/v${PROM_VER}/prometheus-${PROM_VER}.linux-amd64.tar.gz
-            tar -xvf /tmp/prometheus.tgz prometheus-${PROM_VER}.linux-amd64/promtool -C /tmp
-            mv /tmp/prometheus-$PROM_VER.linux-amd64/promtool /usr/local/bin/
-      - run:
-          command: |
-            scripts/test_prometheus_rules.sh
-          
+            /scripts/build-image.sh web3f/polkadot-watcher-csv-exporter .
 
   publishImage:
     docker:
@@ -71,7 +28,7 @@ jobs:
       - setup_remote_docker
       - run:
           command: |
-            /scripts/publish-image.sh web3f/polkadot-watcher
+            /scripts/publish-image.sh web3f/polkadot-watcher-csv-exporter
 
   publishChart:
     docker:
@@ -86,10 +43,6 @@ workflows:
   version: 2
   test_and_deploy:
     jobs:
-      - unitTest:
-          filters:
-            tags:
-              only: /.*/
       - helmLint:
           filters:
             tags:
@@ -99,37 +52,22 @@ workflows:
             tags:
               only: /.*/
           requires:
-            - unitTest
-      - integrationTests:
-          filters:
-            tags:
-              only: /.*/
-          requires:
-            - helmLint
-            - unitTest
-      - testPrometheusRules:
-          filters:
-            tags:
-              only: /.*/   
-          requires:
-            - helmLint     
+            - helmLint  
       - publishImage:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /v[0-9]+(\.[0-9]+)*/
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
           requires:
             - buildImage
-            - integrationTests
-            - testPrometheusRules
+            - helmLint
       - publishChart:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /v[0-9]+(\.[0-9]+)*/
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
           requires:
             - buildImage
-            - integrationTests
-            - testPrometheusRules
+            - helmLint
