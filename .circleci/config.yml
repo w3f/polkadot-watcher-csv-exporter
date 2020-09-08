@@ -12,12 +12,11 @@ jobs:
 
   yarnLint:
     docker:
-      - image: web3f/ci-commons:v2.4.0
+      - image: web3f/node-dind:v0.3.0
     steps:
       - checkout
-      - run:
-          command: |
-            yarn lint     
+      - run: yarn lint
+ 
 
   buildImage:
     docker:
