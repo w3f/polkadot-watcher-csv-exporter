@@ -3,7 +3,7 @@ import { BlockNumber, Header, SessionIndex, EraIndex } from '@polkadot/types/int
 import { Compact } from '@polkadot/types/codec';
 import { Logger } from '@w3f/logger';
 import { Text } from '@polkadot/types/primitive';
-import {writeNominatorCSV, writeValidatorCSV} from './writeCSV'
+import {writeNominatorCSV, writeValidatorCSV} from './writeDataCSV'
 import {DeriveSessionProgress} from '@polkadot/api-derive/session/types'
 import {uploadFiles} from './bucket'
 import fs from 'fs'
@@ -32,6 +32,7 @@ export class Subscriber {
         await this._initAPI();
         await this._initInstanceVariables();
         this._initExportDir();
+
         await this._handleNewHeadSubscriptions();
     }
 
@@ -83,8 +84,9 @@ export class Subscriber {
     }
 
     private async _writeCSV(api: ApiPromise, network: string, exportDir: string, eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> {
-      const nominators = await writeNominatorCSV(api,network,exportDir,eraIndex,sessionIndex,blockNumber);
-      await writeValidatorCSV(api,network,exportDir,eraIndex,sessionIndex,blockNumber,nominators);
+      const request = {api,network,exportDir,eraIndex,sessionIndex,blockNumber}
+      const nominatorStaking = await writeNominatorCSV(request,this.logger);
+      await writeValidatorCSV({...request,nominatorStaking},this.logger);
     }
 
     private _isEndSessionBlock(deriveSessionProgress: DeriveSessionProgress): boolean{
@@ -109,7 +111,7 @@ export class Subscriber {
     }
 
     private _uploadToBucket(): void{
-      uploadFiles(this.exportDir, this.bucketName)
+      this.bucketName && uploadFiles(this.exportDir, this.bucketName)
     }
     
 }

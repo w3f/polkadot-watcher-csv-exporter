@@ -2,10 +2,24 @@
 
 # polkadot-watcher-csv-exporter
 
-All the relevant data generation code is currently in src/writeCSV.ts  
-At the moment, that code is mainly based on https://github.com/mariopino/substrate-data-csv/blob/master/utils.js
+## Please Note
+All the relevant data model code is placed in [writeDataCSV](src/writeDataCSV.ts).  
+At the moment, that code is mainly based on https://github.com/mariopino/substrate-data-csv/blob/master/utils.js and I'd recommend to refactor it.
 
-## Bucket upload
-These two env variables need to be set:   
-- GOOGLE_SERVICE_ACCOUNT  
-- GOOGLE_CLOUD_PROJECT
+## How to Run 
+
+### Requirements
+- yarn: https://classic.yarnpkg.com/en/docs/install/
+
+```bash
+git clone https://github.com/w3f/polkadot-watcher-csv-exporter.git
+cd polkadot-watcher-csv-exporter
+cp config/main.sample.yaml config/main.yaml 
+#just the fist time
+
+yarn
+yarn start
+```
+
+## Output
+The default configuration will create a ./substrate-data-csv folder that will be populated with the chain data 
