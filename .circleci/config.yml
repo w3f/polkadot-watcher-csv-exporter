@@ -61,9 +61,7 @@ workflows:
             tags:
               only: /.*/        
       - buildImage:
-          context: 
-            - dockerhub-bot
-            - github-bot
+          context: dockerhub-bot
           filters:
             tags:
               only: /.*/
