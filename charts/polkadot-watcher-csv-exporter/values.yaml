@@ -9,6 +9,7 @@ config:
   endpoint: "wss://cc3-3.kusama.network"
   port: 3000
   logLevel: info
+  exportDir: "./substrate-data-csv"
 
 resources: 
   requests:
