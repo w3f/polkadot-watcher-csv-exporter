@@ -5,6 +5,8 @@ import { Logger } from '@w3f/logger';
 import { Text } from '@polkadot/types/primitive';
 import {writeNominatorCSV, writeValidatorCSV} from './writeCSV'
 import {DeriveSessionProgress} from '@polkadot/api-derive/session/types'
+import {uploadFiles} from './bucket'
+import fs from 'fs'
 
 import {
     InputConfig,
@@ -16,17 +18,20 @@ export class Subscriber {
     private endpoint: string;
     private sessionIndex: SessionIndex;
     private exportDir: string;
+    private bucketName: string;
 
     constructor(
         cfg: InputConfig,
         private readonly logger: Logger) {
         this.endpoint = cfg.endpoint;
         this.exportDir = cfg.exportDir;
+        this.bucketName = cfg.bucketName;
     }
 
     public async start(): Promise<void> {
         await this._initAPI();
         await this._initInstanceVariables();
+        this._initExportDir();
         await this._handleNewHeadSubscriptions();
     }
 
@@ -44,12 +49,19 @@ export class Subscriber {
         );
     }
 
+    private _initExportDir(): void{
+      if (!fs.existsSync(this.exportDir)) {
+        fs.mkdirSync(this.exportDir)
+      }
+    }
+
     private async _initInstanceVariables(): Promise<void>{
       this.sessionIndex = await this.api.query.session.currentIndex();
     }
 
     private async _handleNewHeadSubscriptions(): Promise<void> {
       false && await this._initCSVHandler(); //DEBUG
+      false && this._uploadToBucket() //DEBUG
       
       this.api.rpc.chain.subscribeNewHeads(async (header) => {
         this._writeCSVHandler(header)
@@ -85,10 +97,19 @@ export class Subscriber {
 
     private _isSessionChanged(deriveSessionProgress: DeriveSessionProgress): boolean{
       if(deriveSessionProgress.currentIndex > this.sessionIndex) {
-        this.sessionIndex = deriveSessionProgress.currentIndex
+        this._handleSessionChange(deriveSessionProgress.currentIndex)
         return true
       }
       return false
+    }
+
+    private _handleSessionChange(newSession: SessionIndex): void{
+      this.sessionIndex = newSession
+      this.bucketName && this._uploadToBucket()
+    }
+
+    private _uploadToBucket(): void{
+      uploadFiles(this.exportDir, this.bucketName)
     }
     
 }
