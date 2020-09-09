@@ -61,11 +61,13 @@ workflows:
             tags:
               only: /.*/        
       - buildImage:
+          context: dockerhub-bot
           filters:
             tags:
               only: /.*/
           requires:
-            - helmLint  
+            - helmLint
+            - yarnLint  
       - publishImage:
           context: dockerhub-bot
           filters:
