@@ -6,6 +6,7 @@ export interface InputConfig {
     port: number;
     endpoint: string;
     exportDir: string;
+    bucketName: string;
 }
 
 export interface MyDeriveStakingAccount extends DeriveStakingAccount {
