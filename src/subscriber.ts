@@ -91,13 +91,13 @@ export class Subscriber {
 
     private _isEndSessionBlock(deriveSessionProgress: DeriveSessionProgress): boolean{
       
-      if(this._isSessionChanged(deriveSessionProgress)) return false
+      if(this._isSessionChanging(deriveSessionProgress)) return false
 
       //it starts to write from the last 5 blocks of the session, just to be sure to not loose any session data
       return deriveSessionProgress.sessionLength.toNumber() - deriveSessionProgress.sessionProgress.toNumber() < 6
     }
 
-    private _isSessionChanged(deriveSessionProgress: DeriveSessionProgress): boolean{
+    private _isSessionChanging(deriveSessionProgress: DeriveSessionProgress): boolean{
       if(deriveSessionProgress.currentIndex > this.sessionIndex) {
         this._handleSessionChange(deriveSessionProgress.currentIndex)
         return true
