@@ -61,12 +61,14 @@ workflows:
             tags:
               only: /.*/        
       - buildImage:
+          context: dockerhub-bot
           filters:
             tags:
               only: /.*/
           requires:
             - helmLint  
       - publishImage:
+          context: dockerhub-bot
           filters:
             branches:
               ignore: /.*/
@@ -77,6 +79,7 @@ workflows:
             - helmLint
             - yarnLint
       - publishChart:
+          context: github-bot
           filters:
             branches:
               ignore: /.*/
