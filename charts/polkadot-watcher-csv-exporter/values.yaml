@@ -10,6 +10,7 @@ config:
   port: 3000
   logLevel: info
   exportDir: "./substrate-data-csv"
+  bucketUpload: false
 
 resources: 
   requests:

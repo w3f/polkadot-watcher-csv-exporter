@@ -9,7 +9,7 @@ export interface InputConfig {
     port: number;
     endpoint: string;
     exportDir: string;
-    bucketName: string;
+    bucketUpload: boolean;
 }
 
 export interface MyDeriveStakingAccount extends DeriveStakingAccount {

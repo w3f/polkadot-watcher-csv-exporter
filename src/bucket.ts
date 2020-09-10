@@ -34,13 +34,6 @@ async function _getFileNames(sourceDir: string): Promise<string[]>{
 
 export async function uploadFiles(sourceDir: string,bucketName: string): Promise<void> {
 
-  if(!process.env.GOOGLE_SERVICE_ACCOUNT){
-    console.log('you need to set GOOGLE_SERVICE_ACCOUNT !!')
-  }
-  if(!process.env.GOOGLE_CLOUD_PROJECT){
-    console.log('you need to set GOOGLE_CLOUD_PROJECT !!')
-  }
-
   const storage = new Storage({
     keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT,
     projectId: process.env.GOOGLE_CLOUD_PROJECT
