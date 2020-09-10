@@ -13,6 +13,7 @@ config:
   bucketUpload:
     enabled: false
     gcpServiceAccount: ''
+    gcpServiceAccountValue: ''
     gcpProject: ''
     gcpBucketName: '' 
 
