@@ -12,11 +12,13 @@ config:
   exportDir: "./substrate-data-csv"
   bucketUpload:
     enabled: false
-    gcpServiceAccount: ''
-    gcpServiceAccountValue: ''
+    gcpServiceAccount: '/app/service_account/credentials.json'
     gcpProject: ''
     gcpBucketName: '' 
 
+secret:
+  gcpServiceAccountValue: ''
+    
 resources: 
   requests:
     cpu: "100m"

@@ -44,7 +44,7 @@ spec:
           mountPath: /app/config
         {{ if ne .Values.environment "ci" }}  
         - name: sa-volume
-          mountPath: /app/sa
+          mountPath: /app/service_account
           readOnly: true
         {{ end }}    
       volumes:
@@ -57,5 +57,5 @@ spec:
           secretName: {{ .Release.Name }}-sa
           items:
           - key: service_account_json
-            path: sa_credentials.json 
+            path: credentials.json 
       {{ end }}         
