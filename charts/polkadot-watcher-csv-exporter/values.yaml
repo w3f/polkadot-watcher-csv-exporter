@@ -3,7 +3,7 @@ port: 3000
 
 image:
   repo: web3f/polkadot-watcher-csv-exporter
-  tag: latest
+  tag: v0.1.2
 
 config:
   endpoint: "wss://cc3-3.kusama.network"
