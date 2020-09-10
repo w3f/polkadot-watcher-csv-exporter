@@ -9,7 +9,14 @@ export interface InputConfig {
     port: number;
     endpoint: string;
     exportDir: string;
-    bucketName: string;
+    bucketUpload: BucketUploadConfig;
+}
+
+export interface BucketUploadConfig{
+  enabled: boolean;
+  gcpServiceAccount: string;
+  gcpProject: string;
+  gcpBucketName: string;
 }
 
 export interface MyDeriveStakingAccount extends DeriveStakingAccount {

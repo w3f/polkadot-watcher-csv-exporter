@@ -1,54 +1,49 @@
 import {Storage, Bucket} from '@google-cloud/storage'
 import fs from 'fs'
 import util from 'util'
+import { BucketUploadConfig } from './types'
+import { Logger } from '@w3f/logger';
 
-function _deleteFile(filePath: string): void{
+function _deleteFile(filePath: string, logger: Logger): void{
   try {
     fs.unlinkSync(filePath)
-    console.log('deleted', filePath)
+    logger.info('deleted ' + filePath)
   } catch(err) {
-    console.error(err)
+    logger.error(err)
   }
 }
 
-async function _handleUploadFileToBucket(filePath: string,bucket: Bucket): Promise<void>{
+async function _handleUploadFileToBucket(filePath: string,bucket: Bucket, logger: Logger): Promise<void>{
   bucket.upload(filePath, function(err, file, apiResponse) {
     if (err) {
-      return console.log('Unable to upload: ', err.stack);
+      return logger.error('Unable to upload: ' + err.stack)
     } 
-    console.log('uploaded '+file.metadata.name+' to '+apiResponse.mediaLink)
-    _deleteFile(filePath)
+    logger.info('uploaded '+file.metadata.name+' to '+apiResponse.mediaLink)
+    _deleteFile(filePath, logger)
   })
 }
 
-async function _getFileNames(sourceDir: string): Promise<string[]>{
+async function _getFileNames(sourceDir: string, logger: Logger): Promise<string[]>{
   const readdir = util.promisify(fs.readdir);
   let names = []
   try {
     names = await readdir(sourceDir)
   } catch (error) {
-    console.log(error)
+    logger.error(error)
   } 
   return names
 }
 
-export async function uploadFiles(sourceDir: string,bucketName: string): Promise<void> {
-
-  if(!process.env.GOOGLE_SERVICE_ACCOUNT){
-    console.log('you need to set GOOGLE_SERVICE_ACCOUNT !!')
-  }
-  if(!process.env.GOOGLE_CLOUD_PROJECT){
-    console.log('you need to set GOOGLE_CLOUD_PROJECT !!')
-  }
+export async function uploadFiles(sourceDir: string, bucketUploadConfig: BucketUploadConfig, logger: Logger): Promise<void> {
 
   const storage = new Storage({
-    keyFilename: process.env.GOOGLE_SERVICE_ACCOUNT,
-    projectId: process.env.GOOGLE_CLOUD_PROJECT
+    keyFilename: bucketUploadConfig.gcpServiceAccount,
+    projectId: bucketUploadConfig.gcpProject
   });
-  const bucket = storage.bucket(bucketName);  
+  const bucket = storage.bucket(bucketUploadConfig.gcpBucketName);  
 
-  const fileNames = await _getFileNames(sourceDir)
+  const fileNames = await _getFileNames(sourceDir, logger)
   fileNames.forEach(fileName => {
-    _handleUploadFileToBucket(sourceDir+'/'+fileName,bucket)
+    _handleUploadFileToBucket(sourceDir+'/'+fileName,bucket, logger)
   })
 }

@@ -10,7 +10,15 @@ config:
   port: 3000
   logLevel: info
   exportDir: "./substrate-data-csv"
+  bucketUpload:
+    enabled: false
+    gcpServiceAccount: '/app/service_account/credentials.json'
+    gcpProject: ''
+    gcpBucketName: '' 
 
+secret:
+  gcpServiceAccountValue: ''
+    
 resources: 
   requests:
     cpu: "100m"

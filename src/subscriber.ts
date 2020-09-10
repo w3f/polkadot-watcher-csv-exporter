@@ -9,7 +9,7 @@ import {uploadFiles} from './bucket'
 import fs from 'fs'
 
 import {
-    InputConfig,
+    InputConfig, BucketUploadConfig,
 } from './types';
 
 export class Subscriber {
@@ -18,14 +18,14 @@ export class Subscriber {
     private endpoint: string;
     private sessionIndex: SessionIndex;
     private exportDir: string;
-    private bucketName: string;
+    private bucketUpload: BucketUploadConfig;
 
     constructor(
         cfg: InputConfig,
         private readonly logger: Logger) {
         this.endpoint = cfg.endpoint;
         this.exportDir = cfg.exportDir;
-        this.bucketName = cfg.bucketName;
+        this.bucketUpload = cfg.bucketUpload;
     }
 
     public async start(): Promise<void> {
@@ -107,11 +107,11 @@ export class Subscriber {
 
     private _handleSessionChange(newSession: SessionIndex): void{
       this.sessionIndex = newSession
-      this.bucketName && this._uploadToBucket()
+      this._uploadToBucket()
     }
 
     private _uploadToBucket(): void{
-      this.bucketName && uploadFiles(this.exportDir, this.bucketName)
+      this.bucketUpload.enabled && uploadFiles(this.exportDir, this.bucketUpload, this.logger)
     }
     
 }

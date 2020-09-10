@@ -48,6 +48,17 @@ jobs:
           command: |
             /scripts/publish-chart.sh
 
+  integrationTests:
+    docker:
+      - image: web3f/ci-commons:v2.4.0
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          description: run integration tests
+          command: |
+            /scripts/integration-tests.sh          
+
 workflows:
   version: 2
   test_and_deploy:
@@ -67,7 +78,14 @@ workflows:
               only: /.*/
           requires:
             - helmLint
-            - yarnLint  
+            - yarnLint
+      - integrationTests:
+          filters:
+            tags:
+              only: /.*/
+          requires:
+            - helmLint
+            - yarnLint        
       - publishImage:
           context: dockerhub-bot
           filters:
@@ -77,8 +95,7 @@ workflows:
               only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
           requires:
             - buildImage
-            - helmLint
-            - yarnLint
+            - integrationTests
       - publishChart:
           context: github-bot
           filters:
@@ -88,5 +105,4 @@ workflows:
               only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
           requires:
             - buildImage
-            - helmLint
-            - yarnLint
+            - integrationTests
