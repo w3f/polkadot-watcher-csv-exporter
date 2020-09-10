@@ -12,6 +12,11 @@ config:
   exportDir: "./substrate-data-csv"
   bucketUpload: false
 
+env:
+  gcpServiceAccount: ''
+  gcpProject: ''
+  gcpBucketName: ''  
+
 resources: 
   requests:
     cpu: "100m"
