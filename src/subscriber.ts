@@ -2,14 +2,14 @@ import { ApiPromise, WsProvider } from '@polkadot/api';
 import { BlockNumber, Header, SessionIndex, EraIndex } from '@polkadot/types/interfaces';
 import { Compact } from '@polkadot/types/codec';
 import { Logger } from '@w3f/logger';
-import { Text, bool } from '@polkadot/types/primitive';
+import { Text } from '@polkadot/types/primitive';
 import {writeNominatorCSV, writeValidatorCSV} from './writeDataCSV'
 import {DeriveSessionProgress} from '@polkadot/api-derive/session/types'
 import {uploadFiles} from './bucket'
 import fs from 'fs'
 
 import {
-    InputConfig,
+    InputConfig, BucketUploadConfig,
 } from './types';
 
 export class Subscriber {
@@ -18,20 +18,19 @@ export class Subscriber {
     private endpoint: string;
     private sessionIndex: SessionIndex;
     private exportDir: string;
-    private isBucketUploadActive: boolean;
+    private bucketUpload: BucketUploadConfig;
 
     constructor(
         cfg: InputConfig,
         private readonly logger: Logger) {
         this.endpoint = cfg.endpoint;
         this.exportDir = cfg.exportDir;
-        this.isBucketUploadActive = cfg.bucketUpload;
+        this.bucketUpload = cfg.bucketUpload;
     }
 
     public async start(): Promise<void> {
         await this._initAPI();
         await this._initInstanceVariables();
-        this.isBucketUploadActive && this._checkBucketUplad()
         this._initExportDir();
 
         await this._handleNewHeadSubscriptions();
@@ -49,18 +48,6 @@ export class Subscriber {
         this.logger.info(
             `You are connected to chain ${this.chain} using ${nodeName} v${nodeVersion}`
         );
-    }
-
-    private _checkBucketUplad(){
-      if(!process.env.GOOGLE_SERVICE_ACCOUNT){
-        this.logger.error('you need to set GOOGLE_SERVICE_ACCOUNT !!')
-      }
-      if(!process.env.GOOGLE_CLOUD_PROJECT){
-        this.logger.error('you need to set GOOGLE_CLOUD_PROJECT !!')
-      }
-      if(!process.env.GOOGLE_BUCKET_NAME){
-        this.logger.error('you need to set GOOGLE_BUCKET_NAME !!')
-      }
     }
 
     private _initExportDir(): void{
@@ -124,11 +111,7 @@ export class Subscriber {
     }
 
     private _uploadToBucket(): void{
-      this.isBucketUploadActive && uploadFiles(this.exportDir, this._getBucketName())
-    }
-
-    private _getBucketName(): string{
-      return process.env.GOOGLE_BUCKET_NAME
+      this.bucketUpload.enabled && uploadFiles(this.exportDir, this.bucketUpload, this.logger)
     }
     
 }

@@ -10,12 +10,11 @@ config:
   port: 3000
   logLevel: info
   exportDir: "./substrate-data-csv"
-  bucketUpload: false
-
-env:
-  gcpServiceAccount: ''
-  gcpProject: ''
-  gcpBucketName: ''  
+  bucketUpload:
+    enabled: false
+    gcpServiceAccount: ''
+    gcpProject: ''
+    gcpBucketName: '' 
 
 resources: 
   requests:

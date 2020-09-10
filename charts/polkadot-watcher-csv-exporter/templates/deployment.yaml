@@ -28,16 +28,7 @@ spec:
         - /app/config/main.yaml
         ports:
         - name: metrics
-          containerPort: {{ .Values.port }}
-        {{ if ne .Values.environment "ci" }}  
-        env:
-          - name: GOOGLE_SERVICE_ACCOUNT
-            value: {{ .Values.env.gcpServiceAccount }}
-          - name: GOOGLE_CLOUD_PROJECT
-            value: {{ .Values.env.gcpProject }}
-          - name: GOOGLE_BUCKET_NAME
-            value: {{ .Values.env.gcpBucketName }} 
-        {{ end }}           
+          containerPort: {{ .Values.port }}       
         livenessProbe:
           httpGet:
             path: /healthcheck
