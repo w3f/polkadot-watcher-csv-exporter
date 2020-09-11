@@ -1,8 +1,8 @@
-import { DeriveStakingAccount } from '@polkadot/api-derive/staking/types';
 import { DeriveAccountRegistration } from '@polkadot/api-derive/accounts/types';
 import { ApiPromise } from '@polkadot/api';
 import { EraIndex, SessionIndex, BlockNumber } from '@polkadot/types/interfaces';
 import { Compact } from '@polkadot/types';
+import { DeriveStakingAccount } from '@polkadot/api-derive/staking/types';
 
 export interface InputConfig {
     logLevel: string;
@@ -25,7 +25,7 @@ export interface MyDeriveStakingAccount extends DeriveStakingAccount {
   voters: number;
 }
 
-export interface NominatorCSVRequest{
+export interface WriteCSVRequest{
   api: ApiPromise;
   network: string; 
   exportDir: string; 
@@ -33,6 +33,11 @@ export interface NominatorCSVRequest{
   sessionIndex: SessionIndex; 
   blockNumber: Compact<BlockNumber>;
 }
-export interface ValidatorCSVrequest extends NominatorCSVRequest {
+
+export interface NominatorCSVRequest extends WriteCSVRequest{
   nominatorStaking: DeriveStakingAccount[];
+}
+
+export interface ValidatorCSVRequest extends NominatorCSVRequest{
+  validatorStaking: DeriveStakingAccount[];
 }

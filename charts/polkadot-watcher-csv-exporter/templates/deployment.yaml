@@ -41,21 +41,26 @@ spec:
         {{ end }}
         volumeMounts:
         - name: config
-          mountPath: /app/config
-        {{ if ne .Values.environment "ci" }}  
-        - name: sa-volume
-          mountPath: /app/service_account
+          mountPath: /app/config 
+        - name: service-account
+          mountPath: {{ dir .Values.config.bucketUpload.gcpServiceAccount }}
           readOnly: true
-        {{ end }}    
+        {{ if ne .Values.environment "ci" }}    
+        - name: data-csv
+          mountPath: {{ dir .Values.config.exportDir }}
+        {{ end }}  
       volumes:
       - name: config
         configMap:
-          name: {{ .Release.Name }}
-      {{ if ne .Values.environment "ci" }}    
-      - name: sa-volume
+          name: {{ .Release.Name }} 
+      - name: service-account
         secret:
-          secretName: {{ .Release.Name }}-sa
+          secretName: {{ .Release.Name }}
           items:
           - key: service_account_json
-            path: credentials.json 
-      {{ end }}         
+            path: {{ base .Values.config.bucketUpload.gcpServiceAccount }}
+      {{ if ne .Values.environment "ci" }}       
+      - name: data-csv
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}
+      {{ end }}    

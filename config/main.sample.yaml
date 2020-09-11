@@ -1,6 +1,6 @@
 endpoint: "wss://kusama-rpc.polkadot.io/"
 port: 3000
 logLevel: info
-exportDir: "./substrate-data-csv"
+exportDir: "./data-csv"
 bucketUpload:
   enabled: false

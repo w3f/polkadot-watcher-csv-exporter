@@ -1,8 +1,38 @@
 import fs from 'fs';
 import { DeriveAccountRegistration } from '@polkadot/api-derive/accounts/types';
 import { DeriveStakingAccount } from '@polkadot/api-derive/staking/types';
-import { MyDeriveStakingAccount, NominatorCSVRequest, ValidatorCSVrequest } from "./types";
+import { MyDeriveStakingAccount, WriteCSVRequest, ValidatorCSVRequest, NominatorCSVRequest } from "./types";
 import { Logger } from '@w3f/logger';
+import { ApiPromise } from '@polkadot/api';
+
+
+
+async function _getNominatorStaking(api: ApiPromise): Promise<DeriveStakingAccount[]>{
+  /* TODO
+  This code is coming from https://github.com/mariopino/substrate-data-csv/blob/master/utils.js
+  and needs to be refactored
+  */
+
+  const nominators = await api.query.staking.nominators.entries();
+  const nominatorAddresses = nominators.map(([address]) => address.toHuman()[0]);
+  const nominatorStaking = await Promise.all(
+    nominatorAddresses.map(nominatorAddress => api.derive.staking.account(nominatorAddress))
+  );
+  return nominatorStaking
+}
+
+async function _getValidatorStaking(api: ApiPromise): Promise<DeriveStakingAccount[]>{
+  /* TODO
+  This code is coming from https://github.com/mariopino/substrate-data-csv/blob/master/utils.js
+  and needs to be refactored
+  */
+
+  const validatorAddresses = await api.query.session.validators();
+  const validatorStaking = await Promise.all(
+    validatorAddresses.map(authorityId => api.derive.staking.account(authorityId))
+  );
+  return validatorStaking
+}
 
 function _getDisplayName(identity: DeriveAccountRegistration): string {
   /* TODO
@@ -22,8 +52,8 @@ function _getDisplayName(identity: DeriveAccountRegistration): string {
   }
 }
 
-export async function writeNominatorCSV(nominatorCSVRequest: NominatorCSVRequest, logger: Logger): Promise<DeriveStakingAccount[]> {
-  const {api, network, exportDir, eraIndex, sessionIndex, blockNumber} = nominatorCSVRequest
+async function _writeNominatorCSV(request: NominatorCSVRequest, logger: Logger): Promise<DeriveStakingAccount[]> {
+  const {network, exportDir, eraIndex, sessionIndex, blockNumber, nominatorStaking} = request
 
   /* TODO
   This code is coming from https://github.com/mariopino/substrate-data-csv/blob/master/utils.js
@@ -31,11 +61,7 @@ export async function writeNominatorCSV(nominatorCSVRequest: NominatorCSVRequest
   */
 
   logger.info(`Writing nominators CSV for session ${sessionIndex}`)
-  const nominators = await api.query.staking.nominators.entries();
-  const nominatorAddresses = nominators.map(([address]) => address.toHuman()[0]);
-  const nominatorStaking = await Promise.all(
-    nominatorAddresses.map(nominatorAddress => api.derive.staking.account(nominatorAddress))
-  );
+
   const filePath = `${exportDir}/${network}_nominators_session_${sessionIndex}.csv`;
   const file = fs.createWriteStream(filePath);
   file.on('error', function(err) { logger.error(err.stack) });
@@ -51,8 +77,8 @@ export async function writeNominatorCSV(nominatorCSVRequest: NominatorCSVRequest
   return nominatorStaking;
 }
 
-export async function writeValidatorCSV(validatorCSVrequest: ValidatorCSVrequest, logger: Logger): Promise<void> {
-  const {api, network, exportDir, eraIndex, sessionIndex, blockNumber, nominatorStaking} = validatorCSVrequest
+async function _writeValidatorCSV(request: ValidatorCSVRequest, logger: Logger): Promise<void> {
+  const {api, network, exportDir, eraIndex, sessionIndex, blockNumber, validatorStaking, nominatorStaking} = request
 
   /* TODO
   This code is coming from https://github.com/mariopino/substrate-data-csv/blob/master/utils.js
@@ -60,11 +86,8 @@ export async function writeValidatorCSV(validatorCSVrequest: ValidatorCSVrequest
   */
 
   logger.info(`Writing validators CSV for session ${sessionIndex}`)
-  
-  const validatorAddresses = await api.query.session.validators();
-  const validatorStaking = await Promise.all(
-    validatorAddresses.map(authorityId => api.derive.staking.account(authorityId))
-  );
+
+
   const myValidatorStaking: MyDeriveStakingAccount[] = []
   for(let i = 0; i < validatorStaking.length; i++) {
     const validator = validatorStaking[i];
@@ -83,8 +106,8 @@ export async function writeValidatorCSV(validatorCSVrequest: ValidatorCSVrequest
     const myValidator = {
       ...validator,
       identity:identity,
-      displayName:_getDisplayName(identity),
-      voters:voters
+      displayName: _getDisplayName(identity),
+      voters: voters
     } as MyDeriveStakingAccount
     myValidatorStaking.push(myValidator)
   } 
@@ -100,4 +123,11 @@ export async function writeValidatorCSV(validatorCSVrequest: ValidatorCSVrequest
   file.end();
 
   logger.info(`Finished writing validators CSV for session ${sessionIndex}`)
+}
+
+export async function writeCSV(request: WriteCSVRequest, logger: Logger): Promise<void>{
+  const nominatorStaking = await _getNominatorStaking(request.api)
+  _writeNominatorCSV({...request,nominatorStaking}, logger)
+  const validatorStaking = await _getValidatorStaking(request.api)
+  _writeValidatorCSV({...request,validatorStaking,nominatorStaking}, logger)
 }
