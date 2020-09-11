@@ -3,7 +3,7 @@ import { BlockNumber, Header, SessionIndex, EraIndex } from '@polkadot/types/int
 import { Compact } from '@polkadot/types/codec';
 import { Logger } from '@w3f/logger';
 import { Text } from '@polkadot/types/primitive';
-import {writeNominatorCSV, writeValidatorCSV} from './writeDataCSV'
+import {writeCSV} from './writeDataCSV'
 import {DeriveSessionProgress} from '@polkadot/api-derive/session/types'
 import {uploadFiles} from './bucket'
 import fs from 'fs'
@@ -19,6 +19,7 @@ export class Subscriber {
     private sessionIndex: SessionIndex;
     private exportDir: string;
     private bucketUpload: BucketUploadConfig;
+    private isCSVBeingWritten: boolean;
 
     constructor(
         cfg: InputConfig,
@@ -66,10 +67,11 @@ export class Subscriber {
 
     private async _initInstanceVariables(): Promise<void>{
       this.sessionIndex = await this.api.query.session.currentIndex();
+      this._unlockCSVWwrite()
     }
 
     private async _handleNewHeadSubscriptions(): Promise<void> {
-      false && await this._initCSVHandler(); //DEBUG
+      true && await this._triggerDebugCSVWrite(); //DEBUG
       false && this._uploadToBucket() //DEBUG
       
       this.api.rpc.chain.subscribeNewHeads(async (header) => {
@@ -77,31 +79,31 @@ export class Subscriber {
       })
     }
 
-    private async _initCSVHandler(): Promise<void> {
+    private async _triggerDebugCSVWrite(): Promise<void> {
       const deriveSessionProgress = await this.api.derive.session.progress();
-      const network = this.chain.toString().toLowerCase()
-      await this._writeCSV(this.api, network, this.exportDir, deriveSessionProgress.currentEra, this.sessionIndex, (await this.api.rpc.chain.getHeader()).number);
+      await this._writeCSV(deriveSessionProgress.currentEra, this.sessionIndex, (await this.api.rpc.chain.getHeader()).number);
     }
 
     private async _writeCSVHandler(header: Header): Promise<void> {
       const deriveSessionProgress = await this.api.derive.session.progress();    
-      if (this._isEndSessionBlock(deriveSessionProgress)) {
-        const network = this.chain.toString().toLowerCase()
-        await this._writeCSV(this.api, network, this.exportDir, deriveSessionProgress.currentEra, deriveSessionProgress.currentIndex, header.number); 
+      if (this._isEndSessionBlock(deriveSessionProgress) && !this.isCSVBeingWritten) {
+        await this._writeCSV(deriveSessionProgress.currentEra, deriveSessionProgress.currentIndex, header.number); 
       }
     }
 
-    private async _writeCSV(api: ApiPromise, network: string, exportDir: string, eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> {
-      const request = {api,network,exportDir,eraIndex,sessionIndex,blockNumber}
-      const nominatorStaking = await writeNominatorCSV(request,this.logger);
-      await writeValidatorCSV({...request,nominatorStaking},this.logger);
+    private async _writeCSV(eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> {
+      const network = this.chain.toString().toLowerCase()
+      const request = {api:this.api,network,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
+      this._lockCSVWrite()
+      writeCSV(request, this.logger)
     }
 
     private _isEndSessionBlock(deriveSessionProgress: DeriveSessionProgress): boolean{
       
       if(this._isSessionChanging(deriveSessionProgress)) return false
 
-      //it starts to write from the last few blocks of the session, just to be sure to not loose any session data
+      //it starts to write from the last few blocks of the session, just to be sure to not loose any session data being the deriveSessionProgress.sessionProgress not fully reliable
+      //it not always reach the very last block and jumps it may jumps to the next session
       return deriveSessionProgress.sessionLength.toNumber() - deriveSessionProgress.sessionProgress.toNumber() < 2
     }
 
@@ -115,11 +117,20 @@ export class Subscriber {
 
     private _handleSessionChange(newSession: SessionIndex): void{
       this.sessionIndex = newSession
+      this._unlockCSVWwrite()
       this._uploadToBucket()
     }
 
     private _uploadToBucket(): void{
       this.bucketUpload.enabled && uploadFiles(this.exportDir, this.bucketUpload, this.logger)
+    }
+
+    private _lockCSVWrite(): void{
+      this.isCSVBeingWritten = true
+    }
+
+    private _unlockCSVWwrite(): void{
+      this.isCSVBeingWritten = false
     }
     
 }
