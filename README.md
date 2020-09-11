@@ -22,4 +22,4 @@ yarn start
 ```
 
 ## Output
-The default configuration will create a ./substrate-data-csv folder that will be populated with the chain data 
+The default configuration will create a ./data-csv folder that will be populated with the chain data 

@@ -22,7 +22,6 @@ main(){
     /scripts/build-helm.sh \
         --set environment=ci \
         --set image.tag="${CIRCLE_SHA1}" \
-        --set secret.gcpServiceAccountValue="test_value" \
         polkadot-watcher-csv-exporter \
         ./charts/polkadot-watcher-csv-exporter
 

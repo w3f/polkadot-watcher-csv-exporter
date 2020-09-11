@@ -54,6 +54,14 @@ export class Subscriber {
       if (!fs.existsSync(this.exportDir)) {
         fs.mkdirSync(this.exportDir)
       }
+
+      if(!this._isDirEmpty(this.exportDir)){
+        this._uploadToBucket()
+      }
+    }
+
+    private _isDirEmpty(path: string): boolean{
+      return fs.readdirSync(path).length === 0
     }
 
     private async _initInstanceVariables(): Promise<void>{
@@ -93,8 +101,8 @@ export class Subscriber {
       
       if(this._isSessionChanging(deriveSessionProgress)) return false
 
-      //it starts to write from the last 5 blocks of the session, just to be sure to not loose any session data
-      return deriveSessionProgress.sessionLength.toNumber() - deriveSessionProgress.sessionProgress.toNumber() < 6
+      //it starts to write from the last few blocks of the session, just to be sure to not loose any session data
+      return deriveSessionProgress.sessionLength.toNumber() - deriveSessionProgress.sessionProgress.toNumber() < 2
     }
 
     private _isSessionChanging(deriveSessionProgress: DeriveSessionProgress): boolean{
