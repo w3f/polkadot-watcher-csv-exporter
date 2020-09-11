@@ -47,7 +47,7 @@ spec:
           readOnly: true
         {{ if ne .Values.environment "ci" }}    
         - name: data-csv
-          mountPath: {{ dir .Values.config.exportDir }}
+          mountPath: {{ .Values.config.exportDir }}
         {{ end }}  
       volumes:
       - name: config
