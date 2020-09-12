@@ -3,9 +3,9 @@ import { BlockNumber, Header, SessionIndex, EraIndex } from '@polkadot/types/int
 import { Compact } from '@polkadot/types/codec';
 import { Logger } from '@w3f/logger';
 import { Text } from '@polkadot/types/primitive';
-import {writeCSV} from './writeDataCSV'
-import {DeriveSessionProgress} from '@polkadot/api-derive/session/types'
-import {uploadFiles} from './bucket'
+import { writeCSV } from './writeDataCSV'
+import { DeriveSessionProgress } from '@polkadot/api-derive/session/types'
+import { BucketGCP } from './bucketGCP'
 import fs from 'fs'
 
 import {
@@ -18,15 +18,19 @@ export class Subscriber {
     private endpoint: string;
     private sessionIndex: SessionIndex;
     private exportDir: string;
-    private bucketUpload: BucketUploadConfig;
     private isCSVBeingWritten: boolean;
+    private logLevel: string;
+    private isBucketEnabled: boolean;
+    private bucket: BucketGCP;
 
     constructor(
         cfg: InputConfig,
         private readonly logger: Logger) {
         this.endpoint = cfg.endpoint;
         this.exportDir = cfg.exportDir;
-        this.bucketUpload = cfg.bucketUpload;
+        this.logLevel = cfg.logLevel;
+        this.isBucketEnabled = cfg.bucketUpload.enabled;
+        if(this.isBucketEnabled) this._initBucket(cfg.bucketUpload);
     }
 
     public async start(): Promise<void> {
@@ -34,7 +38,13 @@ export class Subscriber {
         await this._initInstanceVariables();
         this._initExportDir();
 
+        if(this.logLevel === 'debug') await this._triggerDebugActions()
+
         await this._handleNewHeadSubscriptions();
+    }
+
+    private _initBucket(config: BucketUploadConfig): void{
+      this.bucket = new BucketGCP(config,this.logger)
     }
 
     private async _initAPI(): Promise<void> {
@@ -71,12 +81,16 @@ export class Subscriber {
     }
 
     private async _handleNewHeadSubscriptions(): Promise<void> {
-      true && await this._triggerDebugCSVWrite(); //DEBUG
-      false && this._uploadToBucket() //DEBUG
-      
+
       this.api.rpc.chain.subscribeNewHeads(async (header) => {
         this._writeCSVHandler(header)
       })
+    }
+
+    private async _triggerDebugActions(): Promise<void>{
+      this.logger.debug('debug mode active')
+      await this._triggerDebugCSVWrite();
+      this._uploadToBucket()
     }
 
     private async _triggerDebugCSVWrite(): Promise<void> {
@@ -122,7 +136,7 @@ export class Subscriber {
     }
 
     private _uploadToBucket(): void{
-      this.bucketUpload.enabled && uploadFiles(this.exportDir, this.bucketUpload, this.logger)
+      this.isBucketEnabled && this.bucket.uploadFiles(this.exportDir)
     }
 
     private _lockCSVWrite(): void{
