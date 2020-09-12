@@ -21,7 +21,7 @@ export class BucketGCP {
   async uploadFiles(sourceDir: string): Promise<void> {
   
     const fileNames = this._getFileNames(sourceDir)
-    for (const name in fileNames) {
+    for (const name of fileNames) {
       await this._handleUploadFileToBucket(sourceDir+'/'+name)
     }
   }
@@ -33,7 +33,7 @@ export class BucketGCP {
       this._deleteFile(filePath)
     } catch (error) {
       this.logger.error('Unable to upload: ' + error)
-      process.exit(1);
+      //process.exit(1);
     }
   }
 
