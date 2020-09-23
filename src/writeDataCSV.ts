@@ -178,6 +178,7 @@ async function _writeValidatorEraCSV(request: ValidatorCSVRequest, logger: Logge
 }
 
 export async function writeSessionCSV(request: WriteCSVRequest, logger: Logger): Promise<void>{
+  logger.info(`Writing Session CSV`)
   const nominatorStaking = await _getNominatorStaking(request.api)
   _writeNominatorCSV({...request,nominatorStaking}, logger)
   const validatorStaking = await _getValidatorStaking(request.api)
@@ -185,7 +186,7 @@ export async function writeSessionCSV(request: WriteCSVRequest, logger: Logger):
 }
 
 export async function writeEraCSV(request: WriteCSVRequest, logger: Logger): Promise<void>{
-  logger.info('WRITING ERA CSV.....')
+  logger.info('Writing Era CSV.....')
   const nominatorStaking = await _getNominatorStaking(request.api)
   const validatorStaking = await _getValidatorStaking(request.api)
   _writeValidatorEraCSV({...request,validatorStaking,nominatorStaking}, logger)
