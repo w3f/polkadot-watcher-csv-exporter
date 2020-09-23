@@ -109,7 +109,6 @@ export class Subscriber {
       if (this._isEndEraBlock(deriveSessionProgress) ) {
         await this._writeEraCSV(deriveSessionProgress.activeEra, deriveSessionProgress.currentIndex, header.number)
       }
-      // await new Promise(r => setTimeout(r, 200000));
     }
 
     private async _writeSessionCSV(eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> {
