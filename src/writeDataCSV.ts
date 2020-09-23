@@ -125,9 +125,68 @@ async function _writeValidatorCSV(request: ValidatorCSVRequest, logger: Logger):
   logger.info(`Finished writing validators CSV for session ${sessionIndex}`)
 }
 
-export async function writeCSV(request: WriteCSVRequest, logger: Logger): Promise<void>{
+async function _writeValidatorEraCSV(request: ValidatorCSVRequest, logger: Logger): Promise<void> {
+  const {api, network, exportDir, eraIndex, sessionIndex, blockNumber, validatorStaking, nominatorStaking} = request
+
+  /* TODO
+  This code is coming from https://github.com/mariopino/substrate-data-csv/blob/master/utils.js
+  and needs to be refactored
+  */
+
+  logger.info(`Writing validators CSV for era ${eraIndex}`)
+
+  const eraPoints = (await api.query.staking.erasRewardPoints(eraIndex)).toJSON();
+
+  const myValidatorStaking: MyDeriveStakingAccount[] = []
+  for(let i = 0; i < validatorStaking.length; i++) {
+    const validator = validatorStaking[i];
+    // add identity
+    const { identity } = await api.derive.accounts.info(validator.accountId);
+
+    // add voters
+    let voters = 0;
+    for (let i = 0, len = nominatorStaking.length; i < len; i++) {
+      const staking = nominatorStaking[i];
+      if (staking.nominators.includes(validator.accountId)) {
+        voters++
+      }
+    }
+
+    const validatorEraPoints = eraPoints['individual'][validator.accountId];
+
+    const myValidator = {
+      ...validator,
+      identity:identity,
+      displayName: _getDisplayName(identity),
+      voters: voters,
+      eraPoints: validatorEraPoints,
+    } as MyDeriveStakingAccount
+    myValidatorStaking.push(myValidator)
+  } 
+
+  const filePath = `${exportDir}/${network}_validators_era_${eraIndex}.csv`;
+  const file = fs.createWriteStream(filePath);
+  file.on('error', function(err) { logger.error(err.stack) });
+  file.write(`era,session,block_number,name,stash_address,controller_address,commission_percent,self_stake,total_stake,num_stakers,voters, era_points\n`);
+  for (let i = 0, len = myValidatorStaking.length; i < len; i++) {
+    const staking = myValidatorStaking[i];
+    file.write(`${eraIndex},${sessionIndex},${blockNumber},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},${staking.voters},${staking.eraPoints}\n`);
+  }
+  file.end();
+
+  logger.info(`Finished writing validators CSV for era ${eraIndex}`)
+}
+
+export async function writeSessionCSV(request: WriteCSVRequest, logger: Logger): Promise<void>{
   const nominatorStaking = await _getNominatorStaking(request.api)
   _writeNominatorCSV({...request,nominatorStaking}, logger)
   const validatorStaking = await _getValidatorStaking(request.api)
   _writeValidatorCSV({...request,validatorStaking,nominatorStaking}, logger)
+}
+
+export async function writeEraCSV(request: WriteCSVRequest, logger: Logger): Promise<void>{
+  logger.info('WRITING ERA CSV.....')
+  const nominatorStaking = await _getNominatorStaking(request.api)
+  const validatorStaking = await _getValidatorStaking(request.api)
+  _writeValidatorEraCSV({...request,validatorStaking,nominatorStaking}, logger)
 }

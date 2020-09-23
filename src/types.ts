@@ -23,6 +23,7 @@ export interface MyDeriveStakingAccount extends DeriveStakingAccount {
   identity: DeriveAccountRegistration;
   displayName: string;
   voters: number;
+  eraPoints?: number;
 }
 
 export interface WriteCSVRequest{
