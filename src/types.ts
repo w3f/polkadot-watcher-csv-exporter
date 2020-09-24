@@ -10,6 +10,11 @@ export interface InputConfig {
     endpoint: string;
     exportDir: string;
     bucketUpload: BucketUploadConfig;
+    cronjob: CronJobConfig;
+}
+
+export interface CronJobConfig{
+  enabled: boolean;
 }
 
 export interface BucketUploadConfig{

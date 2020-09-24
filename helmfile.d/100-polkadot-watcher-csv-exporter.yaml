@@ -1,0 +1,37 @@
+environments:
+  production:
+  ci:
+  local:
+
+repositories:
+- name: w3f
+  url: https://w3f.github.io/helm-charts/
+
+releases:
+
+{{- if or (eq .Environment.Name "ci") (eq .Environment.Name "local") }} 
+
+- name: watcher-csv-exporter
+  chart: ../charts/polkadot-watcher-csv-exporter
+  values:
+  - ./config/csv-exporter-watcher-values.yaml.gotmpl
+
+{{- end }}
+
+{{- if eq .Environment.Name "production" }}  
+
+- name: kusama-watcher-csv-exporter
+  namespace: kusama
+  chart: w3f/polkadot-watcher-csv-exporter
+  values:
+  - ./config/kusama/csv-exporter-watcher-values.yaml.gotmpl
+  - ./config/csv-exporter-watcher-values.yaml.gotmpl
+
+- name: polkadot-watcher-csv-exporter
+  namespace: polkadot
+  chart: w3f/polkadot-watcher-csv-exporter
+  values:
+  - ./config/polkadot/csv-exporter-watcher-values.yaml.gotmpl
+  - ./config/csv-exporter-watcher-values.yaml.gotmpl
+  
+{{- end }}  

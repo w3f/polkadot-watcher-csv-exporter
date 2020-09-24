@@ -1,0 +1,66 @@
+{{ if eq .Values.config.cronjob.enabled true }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: {{ .Release.Name }}
+          annotations:
+            checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        spec:
+          containers:
+          - name: {{ .Release.Name }}
+            image: {{ .Values.image.repo }}:{{ .Values.image.tag }}
+            imagePullPolicy: IfNotPresent
+            args:
+            - -c
+            - /app/config/main.yaml
+            ports:
+            - name: metrics
+              containerPort: {{ .Values.port }}       
+            livenessProbe:
+              httpGet:
+                path: /healthcheck
+                port: {{ .Values.port }}
+              initialDelaySeconds: 10
+              timeoutSeconds: 200
+            {{ if ne .Values.environment "ci" }}
+            resources:
+              {{- toYaml .Values.resources | nindent 14 }}
+            {{ end }}
+            volumeMounts:
+            - name: config
+              mountPath: /app/config 
+            - name: service-account
+              mountPath: {{ dir .Values.config.bucketUpload.gcpServiceAccount }}
+              readOnly: true
+            {{ if ne .Values.environment "ci" }}    
+            - name: data-csv
+              mountPath: {{ .Values.config.exportDir }}
+            {{ end }}  
+          volumes:
+          - name: config
+            configMap:
+              name: {{ .Release.Name }} 
+          - name: service-account
+            secret:
+              secretName: {{ .Release.Name }}
+              items:
+              - key: service_account_json
+                path: {{ base .Values.config.bucketUpload.gcpServiceAccount }}
+          {{ if ne .Values.environment "ci" }}       
+          - name: data-csv
+            persistentVolumeClaim:
+              claimName: {{ .Release.Name }}
+          {{ end }}
+          restartPolicy: Never
+{{ end }}          

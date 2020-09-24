@@ -4,3 +4,5 @@ logLevel: info
 exportDir: "./data-csv"
 bucketUpload:
   enabled: false
+cronjob:
+  enabled: false  
