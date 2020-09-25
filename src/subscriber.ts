@@ -22,6 +22,7 @@ export class Subscriber {
     private logLevel: string;
     private isCronjobEnabled: boolean;
     private isBucketEnabled: boolean;
+    private isUploadCompleted: boolean;
     private bucket: BucketGCP;
 
     constructor(
@@ -75,20 +76,24 @@ export class Subscriber {
 
     private _initInstanceVariables = async (): Promise<void> =>{
       this.sessionIndex = await this.api.query.session.currentIndex();
+      this._handleBucketUploadNotCompleted()
       this._unlockCSVWwrite()
     }
 
     private _handleNewHeadSubscriptions = async (): Promise<void> =>{
 
       this.api.rpc.chain.subscribeNewHeads(async (header) => {
+       
         await this._writeCSVHandler(header)
+
+        this.isCronjobEnabled && this._handleCronJob()
       })
     }
 
     private  _triggerDebugActions = async (): Promise<void> => {
       this.logger.debug('debug mode active')
-      await this._triggerDebugCSVWrite();
-      this._uploadToBucket()
+      false && await this._triggerDebugCSVWrite();
+      false && this._uploadToBucket()
     }
 
     private _triggerDebugCSVWrite = async (): Promise<void> =>{
@@ -96,9 +101,14 @@ export class Subscriber {
       await this._writeCSV(deriveSessionProgress.currentEra, this.sessionIndex, (await this.api.rpc.chain.getHeader()).number);
     }
 
+    private  _handleCronJob = (): void =>{
+       this.isUploadCompleted && process.exit()
+    }
+
     private  _writeCSVHandler = async (header: Header): Promise<void> =>{
       const deriveSessionProgress = await this.api.derive.session.progress();    
       if (await this._isEndSessionBlock(deriveSessionProgress) && !this.isCSVBeingWritten) {
+        this.logger.info(`starting the CSV writing for the session ${deriveSessionProgress.currentIndex}`)
         await this._writeCSV(deriveSessionProgress.currentEra, deriveSessionProgress.currentIndex, header.number); 
       }
     }
@@ -131,11 +141,12 @@ export class Subscriber {
       this.sessionIndex = newSession
       this._unlockCSVWwrite()
       await this._uploadToBucket()
-      this.isCronjobEnabled && process.exit()
     }
 
     private _uploadToBucket = async (): Promise<void> =>{
+      this._handleBucketUploadNotCompleted()
       this.isBucketEnabled && await this.bucket.uploadCSVFiles(this.exportDir)
+      this._handleBucketUploadCompleted()
     }
 
     private _lockCSVWrite = (): void =>{
@@ -144,6 +155,14 @@ export class Subscriber {
 
     private _unlockCSVWwrite = (): void =>{
       this.isCSVBeingWritten = false
+    }
+
+    private _handleBucketUploadCompleted = (): void => {
+      this.isUploadCompleted = true
+    }
+
+    private _handleBucketUploadNotCompleted = (): void => {
+      this.isUploadCompleted = false
     }
     
 }

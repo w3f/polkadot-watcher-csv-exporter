@@ -22,6 +22,7 @@ export class BucketGCP {
   
     const fileNames = getFileNames(sourceDir, this.logger)
     for (const name of fileNames) {
+      this.logger.debug(`processing ${name} upload... ( only if csv file )`)
       name.includes('.csv') && await this._handleUploadFileToBucket(sourceDir+'/'+name)
     }
   }
