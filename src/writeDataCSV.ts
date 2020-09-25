@@ -89,15 +89,13 @@ async function _writeValidatorCSV(request: ValidatorCSVRequest, logger: Logger):
 
 
   const myValidatorStaking: MyDeriveStakingAccount[] = []
-  for(let i = 0; i < validatorStaking.length; i++) {
-    const validator = validatorStaking[i];
+  for (const validator of validatorStaking) {
     // add identity
     const { identity } = await api.derive.accounts.info(validator.accountId);
 
     // add voters
     let voters = 0;
-    for (let i = 0, len = nominatorStaking.length; i < len; i++) {
-      const staking = nominatorStaking[i];
+    for (const staking of nominatorStaking) {
       if (staking.nominators.includes(validator.accountId)) {
         voters++
       }

@@ -1,0 +1,34 @@
+environment: {{ .Environment.Name }}
+
+{{ if eq .Environment.Name "ci" }}
+image:
+  tag: {{ env "CIRCLE_SHA1" | default "kind" }}
+{{ else if eq .Environment.Name "local" }}
+image:
+  repo: localhost:5000/polkadot-watcher-csv-exporter
+  tag: latest
+{{ end }}
+
+config:
+  port: 3000
+  logLevel: info
+  bucketUpload:
+    enabled: true
+    gcpProject: 'polkadot-benchmarks'
+    gcpBucketName: 'watcher-csv-exporter'
+  cronjob:
+    enabled: true   
+
+secret:
+  gcpServiceAccountValue: |
+    {{ env "GOOGLE_APPLICATION_CREDENTIALS_CONTENT" }}  
+
+{{- if eq .Environment.Name "production" }}
+resources:
+  requests:
+    cpu: "1500m"
+    memory: "1500Mi"
+  limits:
+    cpu: "2500m"
+    memory: "2500Mi"
+{{- end }}     

@@ -1,3 +1,4 @@
+{{ if ne .Values.config.cronjob.enabled true }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -63,4 +64,5 @@ spec:
       - name: data-csv
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}
-      {{ end }}    
+      {{ end }}  
+{{ end }}        
