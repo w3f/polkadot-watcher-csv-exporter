@@ -6,7 +6,7 @@ import { Subscriber } from '../subscriber';
 import { InputConfig } from '../types';
 
 
-export async function startAction(cmd): Promise<void> {
+export const startAction = async (cmd): Promise<void> =>{
     const cfg = new Config<InputConfig>().parse(cmd.config);
 
     const server = express();
