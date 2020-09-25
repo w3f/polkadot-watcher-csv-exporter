@@ -24,7 +24,8 @@ jobs:
       - image: web3f/ci-commons:v2.4.0
     steps:
       - checkout
-      - setup_remote_docker
+      - setup_remote_docker:
+          docker_layer_caching: true
       - run:
           command: |
             /scripts/build-image.sh web3f/polkadot-watcher-csv-exporter .
@@ -57,7 +58,19 @@ jobs:
       - run:
           description: run integration tests
           command: |
-            /scripts/integration-tests.sh          
+            /scripts/integration-tests.sh
+            
+  deploy:
+      docker:
+        - image: web3f/ci-commons:v2.4.0
+      steps:
+        - checkout
+        - run:
+            environment:
+              GCP_REGION: europe-west3
+              HELM_ENV: production
+            command: |
+              /scripts/deploy.sh -c engineering          
 
 workflows:
   version: 2
