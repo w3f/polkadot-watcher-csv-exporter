@@ -92,8 +92,8 @@ export class Subscriber {
 
     private  _triggerDebugActions = async (): Promise<void> => {
       this.logger.debug('debug mode active')
-      false && await this._triggerDebugCSVWrite();
-      false && this._uploadToBucket()
+      true && await this._triggerDebugCSVWrite();
+      true && this._uploadToBucket()
     }
 
     private _triggerDebugCSVWrite = async (): Promise<void> =>{
