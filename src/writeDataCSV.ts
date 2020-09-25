@@ -5,8 +5,6 @@ import { MyDeriveStakingAccount, WriteCSVRequest, ValidatorCSVRequest, Nominator
 import { Logger } from '@w3f/logger';
 import { ApiPromise } from '@polkadot/api';
 
-
-
 const _getNominatorStaking = async (api: ApiPromise): Promise<DeriveStakingAccount[]> =>{
   /* TODO
   This code is coming from https://github.com/mariopino/substrate-data-csv/blob/master/utils.js
@@ -123,10 +121,83 @@ const _writeValidatorCSV = async (request: ValidatorCSVRequest, logger: Logger):
   logger.info(`Finished writing validators CSV for session ${sessionIndex}`)
 }
 
-export const writeCSV = async (request: WriteCSVRequest, logger: Logger): Promise<void> =>{
-  logger.debug(`CSW write triggered`)
+const _writeValidatorEraCSV = async (request: ValidatorCSVRequest, logger: Logger): Promise<void> => {
+  const {api, network, exportDir, eraIndex, sessionIndex, blockNumber, validatorStaking, nominatorStaking} = request
+
+  /* TODO
+  This code is coming from https://github.com/mariopino/substrate-data-csv/blob/master/utils.js
+  and needs to be refactored
+  */
+
+  logger.info(`Writing validators CSV for era ${eraIndex}`)
+
+  const eraPoints = (await api.query.staking.erasRewardPoints(eraIndex)).toJSON();
+
+  const myValidatorStaking: MyDeriveStakingAccount[] = []
+
+  for (const validator of validatorStaking) {
+    // add identity
+    const { identity } = await api.derive.accounts.info(validator.accountId);
+
+    // add voters
+    let voters = 0;
+    for (const staking of nominatorStaking) {
+      if (staking.nominators.includes(validator.accountId)) {
+        voters++
+      }
+    }
+
+    const validatorEraPoints = eraPoints['individual'][validator.accountId];
+
+    const myValidator = {
+      ...validator,
+      identity:identity,
+      displayName: _getDisplayName(identity),
+      voters: voters,
+      eraPoints: validatorEraPoints,
+    } as MyDeriveStakingAccount
+    myValidatorStaking.push(myValidator)
+  }
+
+  const filePath = `${exportDir}/${network}_validators_era_${eraIndex}.csv`;
+  const file = fs.createWriteStream(filePath);
+  file.on('error', function(err) { logger.error(err.stack) });
+  file.write(`era,session,block_number,name,stash_address,controller_address,commission_percent,self_stake,total_stake,num_stakers,voters, era_points\n`);
+  for (const staking of myValidatorStaking) {
+    file.write(`${eraIndex},${sessionIndex},${blockNumber},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},${staking.voters},${staking.eraPoints}\n`);
+  }
+  file.end();
+
+  logger.info(`Finished writing validators CSV for era ${eraIndex}`)
+}
+
+interface ChainData {
+  nominatorStaking: DeriveStakingAccount[];
+  validatorStaking: DeriveStakingAccount[];
+}
+
+const _writeSessionCSV = async (request: WriteCSVRequest, chainData: ChainData, logger: Logger): Promise<void> =>{
+  await _writeNominatorCSV({...request,nominatorStaking: chainData.nominatorStaking}, logger)
+  await _writeValidatorCSV({...request,validatorStaking: chainData.validatorStaking, nominatorStaking: chainData.nominatorStaking}, logger)
+}
+
+const _writeEraCSV = async (request: WriteCSVRequest, chainData: ChainData, logger: Logger): Promise<void> =>{
+  await _writeValidatorEraCSV({...request,validatorStaking: chainData.validatorStaking,nominatorStaking: chainData.nominatorStaking}, logger)
+}
+
+export const writeSessionCSV = async (request: WriteCSVRequest, logger: Logger): Promise<void> =>{
+  logger.debug(`CSV write triggered`)
   const nominatorStaking = await _getNominatorStaking(request.api)
-  await _writeNominatorCSV({...request,nominatorStaking}, logger)
   const validatorStaking = await _getValidatorStaking(request.api)
-  await _writeValidatorCSV({...request,validatorStaking,nominatorStaking}, logger)
+  const chainData = {nominatorStaking,validatorStaking}
+  await _writeSessionCSV(request, chainData, logger)
+}
+
+export const writeEraCSV = async (request: WriteCSVRequest, logger: Logger): Promise<void> =>{
+  logger.info('CSV era write triggered')
+  const nominatorStaking = await _getNominatorStaking(request.api)
+  const validatorStaking = await _getValidatorStaking(request.api)
+  const chainData = {nominatorStaking,validatorStaking}
+  await _writeSessionCSV(request, chainData, logger)
+  await _writeEraCSV(request, chainData, logger)
 }
