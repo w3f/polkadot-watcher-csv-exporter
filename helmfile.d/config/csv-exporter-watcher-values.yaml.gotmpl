@@ -26,9 +26,9 @@ secret:
 {{- if eq .Environment.Name "production" }}
 resources:
   requests:
-    cpu: "1000m"
+    cpu: "800m"
     memory: "1Gi"
   limits:
     cpu: "2200m"
-    memory: "2200Mi"
+    memory: "2Gi"
 {{- end }}     
