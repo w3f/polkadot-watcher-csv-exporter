@@ -141,12 +141,12 @@ export class Subscriber {
       this.sessionIndex = newSession
       this._unlockCSVWwrite()
       await this._uploadToBucket()
+      this._handleBucketUploadCompleted()
     }
 
     private _uploadToBucket = async (): Promise<void> =>{
       this._handleBucketUploadNotCompleted()
       this.isBucketEnabled && await this.bucket.uploadCSVFiles(this.exportDir)
-      this._handleBucketUploadCompleted()
     }
 
     private _lockCSVWrite = (): void =>{
