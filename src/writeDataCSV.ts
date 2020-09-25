@@ -127,7 +127,7 @@ export async function writeCSV(request: WriteCSVRequest, logger: Logger): Promis
   logger.debug(`CSW write triggered`)
   logger.debug(`${JSON.stringify(request)}`)
   const nominatorStaking = await _getNominatorStaking(request.api)
-  _writeNominatorCSV({...request,nominatorStaking}, logger)
+  await _writeNominatorCSV({...request,nominatorStaking}, logger)
   const validatorStaking = await _getValidatorStaking(request.api)
-  _writeValidatorCSV({...request,validatorStaking,nominatorStaking}, logger)
+  await _writeValidatorCSV({...request,validatorStaking,nominatorStaking}, logger)
 }
