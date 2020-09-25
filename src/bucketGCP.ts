@@ -34,7 +34,6 @@ export class BucketGCP {
       deleteFile(filePath, this.logger)
     } catch (error) {
       this.logger.error(`Unable to upload ${filePath} because: ` + error)
-      //process.exit(1);
     }
   }
  

@@ -18,11 +18,11 @@ export class Subscriber {
     private endpoint: string;
     private sessionIndex: SessionIndex;
     private exportDir: string;
-    private isCSVBeingWritten: boolean;
     private logLevel: string;
     private isCronjobEnabled: boolean;
     private isBucketEnabled: boolean;
-    private isUploadCompleted: boolean;
+    private isCSVWriting: boolean;
+    private isCSVUploadable: boolean;
     private bucket: BucketGCP;
 
     constructor(
@@ -76,7 +76,7 @@ export class Subscriber {
 
     private _initInstanceVariables = async (): Promise<void> =>{
       this.sessionIndex = await this.api.query.session.currentIndex();
-      this._handleBucketUploadNotCompleted()
+      this._setCSVUploadable(false)
       this._unlockCSVWwrite()
     }
 
@@ -86,7 +86,8 @@ export class Subscriber {
        
         await this._writeCSVHandler(header)
 
-        this.isCronjobEnabled && this._handleCronJob()
+        await this._uploadCSVHandler()
+        
       })
     }
 
@@ -102,21 +103,32 @@ export class Subscriber {
     }
 
     private  _handleCronJob = (): void =>{
-       this.isUploadCompleted && process.exit()
+      this.logger.info(`cronjob successfully ending...`)
+      process.exit()
+    }
+
+    private _uploadCSVHandler = async (): Promise<void> => {
+      if(this.isCSVUploadable){
+        await this._uploadToBucket()
+        this.isCronjobEnabled && this._handleCronJob()
+        this._setCSVUploadable(false)
+      }
     }
 
     private  _writeCSVHandler = async (header: Header): Promise<void> =>{
       const deriveSessionProgress = await this.api.derive.session.progress();    
-      if (await this._isEndSessionBlock(deriveSessionProgress) && !this.isCSVBeingWritten) {
+      if (await this._isEndSessionBlock(deriveSessionProgress) && !this.isCSVWriting) {
         this.logger.info(`starting the CSV writing for the session ${deriveSessionProgress.currentIndex}`)
+        
+        this._lockCSVWrite()
         await this._writeCSV(deriveSessionProgress.currentEra, deriveSessionProgress.currentIndex, header.number); 
+        this._setCSVUploadable(true)
       }
     }
 
     private _writeCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> => {
       const network = this.chain.toString().toLowerCase()
       const request = {api:this.api,network,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
-      this._lockCSVWrite()
       await writeCSV(request, this.logger)
     }
 
@@ -140,29 +152,22 @@ export class Subscriber {
     private _handleSessionChange = async (newSession: SessionIndex): Promise<void> =>{
       this.sessionIndex = newSession
       this._unlockCSVWwrite()
-      await this._uploadToBucket()
-      this._handleBucketUploadCompleted()
     }
 
     private _uploadToBucket = async (): Promise<void> =>{
-      this._handleBucketUploadNotCompleted()
       this.isBucketEnabled && await this.bucket.uploadCSVFiles(this.exportDir)
     }
 
     private _lockCSVWrite = (): void =>{
-      this.isCSVBeingWritten = true
+      this.isCSVWriting = true
     }
 
     private _unlockCSVWwrite = (): void =>{
-      this.isCSVBeingWritten = false
+      this.isCSVWriting = false
     }
 
-    private _handleBucketUploadCompleted = (): void => {
-      this.isUploadCompleted = true
-    }
-
-    private _handleBucketUploadNotCompleted = (): void => {
-      this.isUploadCompleted = false
+    private _setCSVUploadable = (status: boolean): void =>{
+      this.isCSVUploadable = status
     }
     
 }
