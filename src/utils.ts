@@ -16,7 +16,6 @@ export const makeDir = (path: string): void =>{
 export const getFileNames = (sourceDir: string, logger: Logger): string[] =>{
 
   let names = []
-  names = fs.readdirSync(sourceDir)
   try {
     names = fs.readdirSync(sourceDir)
   } catch (error) {

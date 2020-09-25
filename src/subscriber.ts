@@ -135,7 +135,7 @@ export class Subscriber {
     }
 
     private _uploadToBucket = async (): Promise<void> =>{
-      this.isBucketEnabled && await this.bucket.uploadFiles(this.exportDir)
+      this.isBucketEnabled && await this.bucket.uploadCSVFiles(this.exportDir)
     }
 
     private _lockCSVWrite = (): void =>{

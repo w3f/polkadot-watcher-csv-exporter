@@ -18,11 +18,11 @@ export class BucketGCP {
     this.bucket = this.storage.bucket(bucketUploadConfig.gcpBucketName);
   }
 
-  public uploadFiles = async (sourceDir: string): Promise<void> =>{
+  public uploadCSVFiles = async (sourceDir: string): Promise<void> =>{
   
     const fileNames = getFileNames(sourceDir, this.logger)
     for (const name of fileNames) {
-      await this._handleUploadFileToBucket(sourceDir+'/'+name)
+      name.includes('.csv') && await this._handleUploadFileToBucket(sourceDir+'/'+name)
     }
   }
 
