@@ -1,4 +1,3 @@
-import { DeriveAccountRegistration } from '@polkadot/api-derive/accounts/types';
 import { ApiPromise } from '@polkadot/api';
 import { EraIndex, SessionIndex, BlockNumber, EraRewardPoints } from '@polkadot/types/interfaces';
 import { Compact } from '@polkadot/types';
