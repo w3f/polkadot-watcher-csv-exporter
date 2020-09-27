@@ -3,7 +3,7 @@ import { BlockNumber, Header, SessionIndex, EraIndex } from '@polkadot/types/int
 import { Compact } from '@polkadot/types/codec';
 import { Logger } from '@w3f/logger';
 import { Text } from '@polkadot/types/primitive';
-import { writeCSV } from './writeDataCSV'
+import { writeSessionCSV, writeEraCSV } from './writeDataCSV'
 import { DeriveSessionProgress } from '@polkadot/api-derive/session/types'
 import { BucketGCP } from './bucketGCP'
 
@@ -16,15 +16,20 @@ export class Subscriber {
     private chain: Text;
     private api: ApiPromise;
     private endpoint: string;
-    private sessionIndex: SessionIndex;
+
     private exportDir: string;
     private logLevel: string;
     private isCronjobEnabled: boolean;
     private isBucketEnabled: boolean;
-    private isCSVWriting: boolean;
-    private isCSVUploadable: boolean;
     private bucket: BucketGCP;
 
+    private sessionIndex: SessionIndex;
+    private eraIndex: EraIndex;
+    private isCSVWriting: boolean;
+    private isCSVUploadable: boolean;
+
+    readonly PROGRESS_DELTA = 20 //two minutes before the ending of the session/era
+    
     constructor(
         cfg: InputConfig,
         private readonly logger: Logger) {
@@ -76,8 +81,19 @@ export class Subscriber {
 
     private _initInstanceVariables = async (): Promise<void> =>{
       this.sessionIndex = await this.api.query.session.currentIndex();
+      this.eraIndex = (await this.api.query.staking.activeEra()).unwrap().index;
       this._setCSVUploadable(false)
       this._unlockCSVWwrite()
+    }
+
+    private  _triggerDebugActions = async (): Promise<void> => {
+      this.logger.debug('debug mode active')
+      false && await this._triggerDebugCSVWrite();
+      false && await this._uploadToBucket()
+    }
+
+    private _triggerDebugCSVWrite = async (): Promise<void> =>{
+      await this._writeEraCSV(this.eraIndex,this.sessionIndex,(await this.api.rpc.chain.getHeader()).number)
     }
 
     private _handleNewHeadSubscriptions = async (): Promise<void> =>{
@@ -91,15 +107,16 @@ export class Subscriber {
       })
     }
 
-    private  _triggerDebugActions = async (): Promise<void> => {
-      this.logger.debug('debug mode active')
-      false && await this._triggerDebugCSVWrite();
-      false && await this._uploadToBucket()
+    private _uploadCSVHandler = async (): Promise<void> => {
+      if(!this.isCSVUploadable) return
+
+      await this._uploadToBucket()
+      this.isCronjobEnabled && this._handleCronJob()
+      this._setCSVUploadable(false)
     }
 
-    private _triggerDebugCSVWrite = async (): Promise<void> =>{
-      const deriveSessionProgress = await this.api.derive.session.progress();
-      await this._writeCSV(deriveSessionProgress.currentEra, this.sessionIndex, (await this.api.rpc.chain.getHeader()).number);
+    private _uploadToBucket = async (): Promise<void> =>{
+      this.isBucketEnabled && await this.bucket.uploadCSVFiles(this.exportDir)
     }
 
     private  _handleCronJob = (): void =>{
@@ -107,38 +124,69 @@ export class Subscriber {
       process.exit()
     }
 
-    private _uploadCSVHandler = async (): Promise<void> => {
-      if(this.isCSVUploadable){
-        await this._uploadToBucket()
-        this.isCronjobEnabled && this._handleCronJob()
-        this._setCSVUploadable(false)
-      }
-    }
-
+    
     private  _writeCSVHandler = async (header: Header): Promise<void> =>{
+      if(this.isCSVWriting) return
+
       const deriveSessionProgress = await this.api.derive.session.progress();    
-      if (await this._isEndSessionBlock(deriveSessionProgress) && !this.isCSVWriting) {
+
+      if (await this._isEndEraBlock(deriveSessionProgress)) {
+        this.logger.info(`starting the CSV writing for the session ${deriveSessionProgress.currentIndex} and the era ${deriveSessionProgress.currentEra}`)
+
+        this._lockCSVWrite()
+        await this._writeEraCSV(deriveSessionProgress.activeEra, deriveSessionProgress.currentIndex, header.number)
+        this._setCSVUploadable(true)
+      }
+
+      else if (await this._isEndSessionBlock(deriveSessionProgress)) {
+
         this.logger.info(`starting the CSV writing for the session ${deriveSessionProgress.currentIndex}`)
         
         this._lockCSVWrite()
-        await this._writeCSV(deriveSessionProgress.currentEra, deriveSessionProgress.currentIndex, header.number); 
+        await this._writeSessionCSV(deriveSessionProgress.currentEra, deriveSessionProgress.currentIndex, header.number); 
         this._setCSVUploadable(true)
       }
     }
 
-    private _writeCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> => {
+    private _writeEraCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> => {
       const network = this.chain.toString().toLowerCase()
       const request = {api:this.api,network,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
-      await writeCSV(request, this.logger)
+      await writeEraCSV(request, this.logger)
+    }
+
+    private _writeSessionCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> => {
+      const network = this.chain.toString().toLowerCase()
+      const request = {api:this.api,network,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
+      await writeSessionCSV(request, this.logger)
+    }
+
+    private _isEndEraBlock = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{
+
+      if (await this._isEraChanging(deriveSessionProgress)) return false
+
+      return deriveSessionProgress.eraLength.toNumber() - deriveSessionProgress.eraProgress.toNumber() < this.PROGRESS_DELTA
+    }
+
+    private _isEraChanging = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{
+      if (deriveSessionProgress.activeEra > this.eraIndex){
+        await this._handleEraChange(deriveSessionProgress.activeEra, deriveSessionProgress.currentIndex)
+        return true
+      }
+      return false 
+    }
+
+    private _handleEraChange = async (newEra: EraIndex, newSession: SessionIndex): Promise<void> =>{
+      this.eraIndex = newEra
+      await this._handleSessionChange(newSession)
     }
 
     private _isEndSessionBlock = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{
       
       if(await this._isSessionChanging(deriveSessionProgress)) return false
 
-      //it starts to write from the last few blocks of the session, just to be sure to not loose any session data being the deriveSessionProgress.sessionProgress not fully reliable
-      //it not always reach the very last block and jumps it may jumps to the next session
-      return deriveSessionProgress.sessionLength.toNumber() - deriveSessionProgress.sessionProgress.toNumber() < 3
+      //it starts to write from the last few blocks of the session, just to be sure to not loose any session data being the deriveSessionProgress.sessionProgress not fully reliable.
+      //Unfortunatly it not always reach the very last block and it may jumps directly to the next session.
+      return deriveSessionProgress.sessionLength.toNumber() - deriveSessionProgress.sessionProgress.toNumber() < this.PROGRESS_DELTA
     }
 
     private _isSessionChanging = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{
@@ -152,10 +200,6 @@ export class Subscriber {
     private _handleSessionChange = async (newSession: SessionIndex): Promise<void> =>{
       this.sessionIndex = newSession
       this._unlockCSVWwrite()
-    }
-
-    private _uploadToBucket = async (): Promise<void> =>{
-      this.isBucketEnabled && await this.bucket.uploadCSVFiles(this.exportDir)
     }
 
     private _lockCSVWrite = (): void =>{

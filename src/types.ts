@@ -1,6 +1,5 @@
-import { DeriveAccountRegistration } from '@polkadot/api-derive/accounts/types';
 import { ApiPromise } from '@polkadot/api';
-import { EraIndex, SessionIndex, BlockNumber } from '@polkadot/types/interfaces';
+import { EraIndex, SessionIndex, BlockNumber, EraRewardPoints } from '@polkadot/types/interfaces';
 import { Compact } from '@polkadot/types';
 import { DeriveStakingAccount } from '@polkadot/api-derive/staking/types';
 
@@ -25,9 +24,9 @@ export interface BucketUploadConfig{
 }
 
 export interface MyDeriveStakingAccount extends DeriveStakingAccount {
-  identity: DeriveAccountRegistration;
   displayName: string;
   voters: number;
+  eraPoints?: number;
 }
 
 export interface WriteCSVRequest{
@@ -39,10 +38,16 @@ export interface WriteCSVRequest{
   blockNumber: Compact<BlockNumber>;
 }
 
-export interface NominatorCSVRequest extends WriteCSVRequest{
+export interface WriteNominatorCSVRequest extends WriteCSVRequest{
   nominatorStaking: DeriveStakingAccount[];
 }
 
-export interface ValidatorCSVRequest extends NominatorCSVRequest{
-  validatorStaking: DeriveStakingAccount[];
+export interface WriteValidatorCSVRequest extends WriteCSVRequest{
+  myValidatorStaking: MyDeriveStakingAccount[];
+}
+
+export interface ChainData {
+  eraPoints: EraRewardPoints;
+  nominatorStaking: DeriveStakingAccount[];
+  myValidatorStaking: MyDeriveStakingAccount[];
 }
