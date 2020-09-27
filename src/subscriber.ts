@@ -89,11 +89,11 @@ export class Subscriber {
     private  _triggerDebugActions = async (): Promise<void> => {
       this.logger.debug('debug mode active')
       false && await this._triggerDebugCSVWrite();
-      false && await this._uploadToBucket()
     }
 
     private _triggerDebugCSVWrite = async (): Promise<void> =>{
       await this._writeEraCSV(this.eraIndex,this.sessionIndex,(await this.api.rpc.chain.getHeader()).number)
+      this._setCSVUploadable(true)
     }
 
     private _handleNewHeadSubscriptions = async (): Promise<void> =>{
@@ -109,10 +109,10 @@ export class Subscriber {
 
     private _uploadCSVHandler = async (): Promise<void> => {
       if(!this.isCSVUploadable) return
+      this._setCSVUploadable(false)
 
       await this._uploadToBucket()
       this.isCronjobEnabled && this._handleCronJob()
-      this._setCSVUploadable(false)
     }
 
     private _uploadToBucket = async (): Promise<void> =>{

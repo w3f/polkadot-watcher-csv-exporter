@@ -52,10 +52,10 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
   logger.debug(`gathering some data from the chain...`)
   const {api,eraIndex} = request
   const eraPointsPromise = api.query.staking.erasRewardPoints(eraIndex);
-  logger.debug(`nominator...`)
+  logger.debug(`nominators...`)
   const nominatorStakingPromise = _getNominatorStaking(api)
   const [nominatorStaking,eraPoints] = [await nominatorStakingPromise, await eraPointsPromise]
-  logger.debug(`validator...`)
+  logger.debug(`validators...`)
   const myValidatorStaking = await _getMyValidatorStaking(api,nominatorStaking,eraPoints)
 
   return {
