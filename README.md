@@ -18,6 +18,7 @@ cp config/main.sample.yaml config/main.yaml
 #just the fist time
 
 yarn
+yarn build
 yarn start
 ```
 
