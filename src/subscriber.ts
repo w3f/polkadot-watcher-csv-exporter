@@ -18,7 +18,8 @@ export class Subscriber {
     private endpoint: string;
 
     private exportDir: string;
-    private logLevel: string;
+    private isInitialWriteForced: boolean;
+    private isDebugEnabled: boolean;
     private isCronjobEnabled: boolean;
     private isBucketEnabled: boolean;
     private bucket: BucketGCP;
@@ -28,16 +29,18 @@ export class Subscriber {
     private isCSVWriting: boolean;
     private isCSVUploadable: boolean;
 
-    readonly PROGRESS_DELTA = 20 //two minutes before the ending of the session/era
+    private progress_delta: number //20 = two minutes before the ending of the session/era
     
     constructor(
         cfg: InputConfig,
         private readonly logger: Logger) {
         this.endpoint = cfg.endpoint;
         this.exportDir = cfg.exportDir;
-        this.logLevel = cfg.logLevel;
+        this.isDebugEnabled = cfg.debug.enabled
+        this.isInitialWriteForced = cfg.debug.forceInitialWrite
         this.isBucketEnabled = cfg.bucketUpload.enabled;
         this.isCronjobEnabled = cfg.cronjob.enabled;
+        this.progress_delta = cfg.endSessionBlockDistance
         if(this.isBucketEnabled) this._initBucket(cfg.bucketUpload);
     }
 
@@ -46,7 +49,7 @@ export class Subscriber {
         await this._initInstanceVariables();
         this._initExportDir();
 
-        if(this.logLevel === 'debug') await this._triggerDebugActions()
+        this.isDebugEnabled && await this._triggerDebugActions()
 
         await this._handleNewHeadSubscriptions();
     }
@@ -87,8 +90,8 @@ export class Subscriber {
     }
 
     private  _triggerDebugActions = async (): Promise<void> => {
-      this.logger.debug('debug mode active')
-      false && await this._triggerDebugCSVWrite();
+      this.logger.info('debug mode active')
+      this.isInitialWriteForced && await this._triggerDebugCSVWrite();
     }
 
     private _triggerDebugCSVWrite = async (): Promise<void> =>{
@@ -164,7 +167,7 @@ export class Subscriber {
 
       if (await this._isEraChanging(deriveSessionProgress)) return false
 
-      return deriveSessionProgress.eraLength.toNumber() - deriveSessionProgress.eraProgress.toNumber() < this.PROGRESS_DELTA
+      return deriveSessionProgress.eraLength.toNumber() - deriveSessionProgress.eraProgress.toNumber() < this.progress_delta
     }
 
     private _isEraChanging = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{
@@ -186,7 +189,7 @@ export class Subscriber {
 
       //it starts to write from the last few blocks of the session, just to be sure to not loose any session data being the deriveSessionProgress.sessionProgress not fully reliable.
       //Unfortunatly it not always reach the very last block and it may jumps directly to the next session.
-      return deriveSessionProgress.sessionLength.toNumber() - deriveSessionProgress.sessionProgress.toNumber() < this.PROGRESS_DELTA
+      return deriveSessionProgress.sessionLength.toNumber() - deriveSessionProgress.sessionProgress.toNumber() < this.progress_delta
     }
 
     private _isSessionChanging = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{

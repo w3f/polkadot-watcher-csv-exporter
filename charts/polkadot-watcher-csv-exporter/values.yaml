@@ -2,13 +2,17 @@ environment: production
 
 image:
   repo: web3f/polkadot-watcher-csv-exporter
-  tag: v0.3.4
+  tag: v0.3.5
 
 config:
   endpoint: "wss://cc3-3.kusama.network"
   port: 3000
   logLevel: info
+  debug:
+    enabled: false
+    forceInitialWrite: false
   exportDir: "/app/data-csv"
+  endSessionBlockDistance: 20
   bucketUpload:
     enabled: false
     gcpServiceAccount: '/app/service-account/credentials.json'
