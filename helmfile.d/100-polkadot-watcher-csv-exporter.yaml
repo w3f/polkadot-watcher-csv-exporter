@@ -24,14 +24,14 @@ releases:
   namespace: kusama
   chart: w3f/polkadot-watcher-csv-exporter
   values:
-  - ./config/kusama/csv-exporter-watcher-values.yaml.gotmpl
   - ./config/csv-exporter-watcher-values.yaml.gotmpl
+  - ./config/kusama/csv-exporter-watcher-values.yaml.gotmpl
 
 - name: polkadot-watcher-csv-exporter
   namespace: polkadot
   chart: w3f/polkadot-watcher-csv-exporter
   values:
-  - ./config/polkadot/csv-exporter-watcher-values.yaml.gotmpl
   - ./config/csv-exporter-watcher-values.yaml.gotmpl
+  - ./config/polkadot/csv-exporter-watcher-values.yaml.gotmpl
   
 {{- end }}  
