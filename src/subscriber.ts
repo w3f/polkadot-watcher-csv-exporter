@@ -129,7 +129,7 @@ export class Subscriber {
 
     
     private  _writeCSVHandler = async (header: Header): Promise<void> =>{
-      if(this.isCSVWriting) return
+      if(this._isCSVWriteLocked()) return
 
       const deriveSessionProgress = await this.api.derive.session.progress();    
 
@@ -211,6 +211,10 @@ export class Subscriber {
 
     private _unlockCSVWwrite = (): void =>{
       this.isCSVWriting = false
+    }
+
+    private _isCSVWriteLocked = (): boolean =>{
+      return this.isCSVWriting
     }
 
     private _setCSVUploadable = (status: boolean): void =>{
