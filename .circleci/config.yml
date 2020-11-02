@@ -26,6 +26,7 @@ jobs:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
+          version: 19.03.13
       - run:
           command: |
             /scripts/build-image.sh web3f/polkadot-watcher-csv-exporter .
@@ -35,7 +36,8 @@ jobs:
       - image: web3f/ci-commons:v2.4.0
     steps:
       - checkout
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.13
       - run:
           command: |
             /scripts/publish-image.sh web3f/polkadot-watcher-csv-exporter
@@ -54,7 +56,8 @@ jobs:
       - image: web3f/ci-commons:v2.4.0
     steps:
       - checkout
-      - setup_remote_docker
+      - setup_remote_docker:
+          version: 19.03.13
       - run:
           description: run integration tests
           command: |
