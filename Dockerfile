@@ -1,4 +1,4 @@
-FROM node:12.18.4-alpine
+FROM node:15.0-buster
 
 RUN apk add --no-cache make gcc g++ python3
 
