@@ -5,12 +5,15 @@ import { ApiPromise } from '@polkadot/api';
 import { EraRewardPoints } from '@polkadot/types/interfaces';
 import { getDisplayName, initFile, closeFile } from './utils';
 
-const _getNominatorStaking = async (api: ApiPromise): Promise<DeriveStakingAccount[]> =>{
+const _getNominatorStaking = async (api: ApiPromise, logger: Logger): Promise<DeriveStakingAccount[]> =>{
 
   const nominators = await api.query.staking.nominators.entries();
   const nominatorAddresses = nominators.map(([address]) => address.toHuman()[0]);
   const nominatorStaking = await Promise.all(
-    nominatorAddresses.map(nominatorAddress => api.derive.staking.account(nominatorAddress))
+    nominatorAddresses.map(nominatorAddress => {
+      logger.debug(`retrieving nominator ${nominatorAddress} staking info...`)
+      return api.derive.staking.account(nominatorAddress)
+    })
   );
   return nominatorStaking
 }
@@ -53,7 +56,7 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
   const {api,eraIndex} = request
   const eraPointsPromise = api.query.staking.erasRewardPoints(eraIndex);
   logger.debug(`nominators...`)
-  const nominatorStakingPromise = _getNominatorStaking(api)
+  const nominatorStakingPromise = _getNominatorStaking(api,logger)
   const [nominatorStaking,eraPoints] = [await nominatorStakingPromise, await eraPointsPromise]
   logger.debug(`validators...`)
   const myValidatorStaking = await _getMyValidatorStaking(api,nominatorStaking,eraPoints)
