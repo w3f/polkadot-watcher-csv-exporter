@@ -8,17 +8,3 @@ image:
   repo: localhost:5000/polkadot-watcher-csv-exporter
   tag: latest
 {{ end }}
-
-config:
-  port: 3000
-  logLevel: debug
-  bucketUpload:
-    enabled: true
-    gcpProject: 'polkadot-benchmarks'
-    gcpBucketName: 'watcher-csv-exporter'
-  cronjob:
-    enabled: true   
-
-secret:
-  gcpServiceAccountValue: |
-    {{ env "GOOGLE_APPLICATION_CREDENTIALS_CONTENT" }}   
