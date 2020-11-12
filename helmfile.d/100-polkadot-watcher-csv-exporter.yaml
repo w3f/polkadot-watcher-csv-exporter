@@ -17,21 +17,3 @@ releases:
   - ./config/csv-exporter-watcher-values.yaml.gotmpl
 
 {{- end }}
-
-{{- if eq .Environment.Name "production" }}  
-
-- name: kusama-watcher-csv-exporter
-  namespace: kusama
-  chart: w3f/polkadot-watcher-csv-exporter
-  values:
-  - ./config/csv-exporter-watcher-values.yaml.gotmpl
-  - ./config/kusama/csv-exporter-watcher-values.yaml.gotmpl
-
-- name: polkadot-watcher-csv-exporter
-  namespace: polkadot
-  chart: w3f/polkadot-watcher-csv-exporter
-  values:
-  - ./config/csv-exporter-watcher-values.yaml.gotmpl
-  - ./config/polkadot/csv-exporter-watcher-values.yaml.gotmpl
-  
-{{- end }}  
