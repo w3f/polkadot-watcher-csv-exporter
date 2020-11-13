@@ -9,13 +9,43 @@ const _getNominatorStaking = async (api: ApiPromise, logger: Logger): Promise<De
 
   const nominators = await api.query.staking.nominators.entries();
   const nominatorAddresses = nominators.map(([address]) => address.toHuman()[0]);
-  const nominatorStaking = await Promise.all(
-    nominatorAddresses.map(nominatorAddress => {
+
+  //FIXME: split the Promise resource usage
+  
+  const nominatorAddresses0 = nominatorAddresses.slice(0,nominatorAddresses.length/4)
+  const nominatorAddresses1 = nominatorAddresses.slice(nominatorAddresses.length/4,nominatorAddresses.length/2)
+  const nominatorAddresses2 = nominatorAddresses.slice(nominatorAddresses.length/2).slice(0,nominatorAddresses.length/2)
+  const nominatorAddresses3 = nominatorAddresses.slice(nominatorAddresses.length/2).slice(nominatorAddresses.length/2)
+
+  const nominatorStaking0 = await Promise.all(
+    nominatorAddresses0.map(nominatorAddress => {
       logger.debug(`retrieving nominator ${nominatorAddress} staking info...`)
       return api.derive.staking.account(nominatorAddress)
     })
   );
-  return nominatorStaking
+
+  const nominatorStaking1 = await Promise.all(
+    nominatorAddresses1.map(nominatorAddress => {
+      logger.debug(`retrieving nominator ${nominatorAddress} staking info...`)
+      return api.derive.staking.account(nominatorAddress)
+    })
+  );
+
+  const nominatorStaking2 = await Promise.all(
+    nominatorAddresses2.map(nominatorAddress => {
+      logger.debug(`retrieving nominator ${nominatorAddress} staking info...`)
+      return api.derive.staking.account(nominatorAddress)
+    })
+  );  
+
+  const nominatorStaking3 = await Promise.all(
+    nominatorAddresses3.map(nominatorAddress => {
+      logger.debug(`retrieving nominator ${nominatorAddress} staking info...`)
+      return api.derive.staking.account(nominatorAddress)
+    })
+  );
+
+  return [...nominatorStaking0,...nominatorStaking1,...nominatorStaking2,...nominatorStaking3]
 }
 
 const _getMyValidatorStaking = async (api: ApiPromise, nominatorStaking: DeriveStakingAccount[], eraPoints: EraRewardPoints): Promise<DeriveStakingAccount[]> =>{
