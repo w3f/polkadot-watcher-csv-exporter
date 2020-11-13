@@ -35,7 +35,7 @@ const _getMyValidatorStaking = async (api: ApiPromise, nominatorStaking: DeriveS
         }
       }
 
-      const validatorEraPoints = eraPoints.toJSON()['individual'][validatorAddress];
+      const validatorEraPoints = eraPoints.toJSON()['individual'][validatorAddress.toHuman()] ? eraPoints.toJSON()['individual'][validatorAddress.toHuman()] : 0
 
       const [validator,{identity}] = [await validatorPromise, await infoPromise]
       return {

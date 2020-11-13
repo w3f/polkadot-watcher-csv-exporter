@@ -115,15 +115,22 @@ export class Subscriber {
       this._setCSVUploadable(false)
 
       await this._uploadToBucket()
-      this.isCronjobEnabled && this._handleCronJob()
+      this.isCronjobEnabled && await this._handleCronJob()
     }
 
     private _uploadToBucket = async (): Promise<void> =>{
       this.isBucketEnabled && await this.bucket.uploadCSVFiles(this.exportDir)
     }
 
-    private  _handleCronJob = (): void =>{
+    private  _handleCronJob = async(): Promise<void> =>{
       this.logger.info(`cronjob successfully ending...`)
+
+      //Fix to give time to the file descriptors to be closed properly
+      //The issue started with Node15
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20000);
+      });
+
       process.exit()
     }
 

@@ -39,13 +39,14 @@ export const initFile = (exportDir: string,fileName: string,logger: Logger): Wri
 
   const filePath = `${exportDir}/${fileName}`;
   const file = fs.createWriteStream(filePath);
-  file.on('error', function(err) { logger.error(err.stack) });
+  file.on('error', (err) => { logger.error(err.stack) });
 
   return file
 }
 
 export const closeFile = (file: WriteStream): void=> {
   file.end();
+  file.close();
 }
 
 export const getDisplayName = (identity: DeriveAccountRegistration): string =>{

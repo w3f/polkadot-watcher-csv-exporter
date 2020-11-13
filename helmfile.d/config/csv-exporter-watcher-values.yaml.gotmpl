@@ -8,3 +8,10 @@ image:
   repo: localhost:5000/polkadot-watcher-csv-exporter
   tag: latest
 {{ end }}
+
+config:
+  debug:
+    enabled: true
+    forceInitialWrite: true
+  cronjob:
+    enabled: false  
