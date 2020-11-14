@@ -81,7 +81,7 @@ const _writeNominatorSessionCSV = async (request: WriteNominatorCSVRequest, logg
 
   _writeFileNominatorSession(file,request)
 
-  closeFile(file)
+  await closeFile(file)
 
   logger.info(`Finished writing nominators CSV for session ${sessionIndex}`)
 }
@@ -104,7 +104,7 @@ const _writeValidatorSessionCSV = async (request: WriteValidatorCSVRequest, logg
 
   _writeFileValidatorSession(file,request)
 
-  closeFile(file)
+  await closeFile(file)
 
   logger.info(`Finished writing validators CSV for session ${sessionIndex}`)
 }
@@ -119,7 +119,7 @@ const _writeValidatorEraCSV = async (request: WriteValidatorCSVRequest, logger: 
 
   _writeFileValidatorSession(file,request)
 
-  closeFile(file)
+  await closeFile(file)
 
   logger.info(`Finished writing validators CSV for era ${eraIndex}`)
 }

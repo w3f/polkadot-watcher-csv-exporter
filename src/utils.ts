@@ -44,9 +44,11 @@ export const initFile = (exportDir: string,fileName: string,logger: Logger): Wri
   return file
 }
 
-export const closeFile = (file: WriteStream): void=> {
-  file.end();
-  file.close();
+export const closeFile = (file: WriteStream): Promise<void> => {
+  return new Promise(resolve => {
+    file.on("close", resolve);
+    file.close();
+  });
 }
 
 export const getDisplayName = (identity: DeriveAccountRegistration): string =>{
