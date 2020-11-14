@@ -4,7 +4,6 @@
 
 ## Please Note
 All the relevant data model code is placed in [writeDataCSV](src/writeDataCSV.ts).  
-At the moment, that code is mainly based on https://github.com/mariopino/substrate-data-csv/blob/master/utils.js and I'd recommend to refactor it.
 
 ## How to Run 
 
