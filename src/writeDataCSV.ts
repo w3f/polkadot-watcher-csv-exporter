@@ -5,78 +5,41 @@ import { ApiPromise } from '@polkadot/api';
 import { EraRewardPoints } from '@polkadot/types/interfaces';
 import { getDisplayName, initFile, closeFile } from './utils';
 
-const _getNominatorStaking = async (api: ApiPromise, logger: Logger): Promise<DeriveStakingAccount[]> =>{
+const _getNominatorStaking = async (api: ApiPromise): Promise<DeriveStakingAccount[]> =>{
 
   const nominators = await api.query.staking.nominators.entries();
-  const nominatorAddresses = nominators.map(([address]) => address.toHuman()[0]);
+  const nominatorAddresses = nominators.map(([address]) => ""+address.toHuman()[0]);
 
-  //FIXME: split the Promise resource usage
-  
-  const nominatorAddresses0 = nominatorAddresses.slice(0,nominatorAddresses.length/4)
-  const nominatorAddresses1 = nominatorAddresses.slice(nominatorAddresses.length/4,nominatorAddresses.length/2)
-  const nominatorAddresses2 = nominatorAddresses.slice(nominatorAddresses.length/2).slice(0,nominatorAddresses.length/2)
-  const nominatorAddresses3 = nominatorAddresses.slice(nominatorAddresses.length/2).slice(nominatorAddresses.length/2)
-
-  const nominatorStaking0 = await Promise.all(
-    nominatorAddresses0.map(nominatorAddress => {
-      logger.debug(`retrieving nominator ${nominatorAddress} staking info...`)
-      return api.derive.staking.account(nominatorAddress)
-    })
-  );
-
-  const nominatorStaking1 = await Promise.all(
-    nominatorAddresses1.map(nominatorAddress => {
-      logger.debug(`retrieving nominator ${nominatorAddress} staking info...`)
-      return api.derive.staking.account(nominatorAddress)
-    })
-  );
-
-  const nominatorStaking2 = await Promise.all(
-    nominatorAddresses2.map(nominatorAddress => {
-      logger.debug(`retrieving nominator ${nominatorAddress} staking info...`)
-      return api.derive.staking.account(nominatorAddress)
-    })
-  );  
-
-  const nominatorStaking3 = await Promise.all(
-    nominatorAddresses3.map(nominatorAddress => {
-      logger.debug(`retrieving nominator ${nominatorAddress} staking info...`)
-      return api.derive.staking.account(nominatorAddress)
-    })
-  );
-
-  return [...nominatorStaking0,...nominatorStaking1,...nominatorStaking2,...nominatorStaking3]
+  return api.derive.staking.accounts(nominatorAddresses)
 }
 
-const _getMyValidatorStaking = async (api: ApiPromise, nominatorStaking: DeriveStakingAccount[], eraPoints: EraRewardPoints): Promise<DeriveStakingAccount[]> =>{
-  const validatorAddresses = await api.query.session.validators();
+const _getMyValidatorStaking = async (api: ApiPromise, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints): Promise<DeriveStakingAccount[]> =>{
+  const validatorsAddresses = await api.query.session.validators();
+  const validatorsStakings = await api.derive.staking.accounts(validatorsAddresses)
 
-  const myValidatorStaking = await Promise.all(
+  const myValidatorStaking = Promise.all ( validatorsStakings.map( async validatorStaking => {
 
-    validatorAddresses.map( async validatorAddress => {
+    const validatorAddress = validatorStaking.accountId
+    const infoPromise = api.derive.accounts.info(validatorAddress);
 
-      const validatorPromise = api.derive.staking.account(validatorAddress)
-      const infoPromise = api.derive.accounts.info(validatorAddress);
+    const validatorEraPoints = eraPoints.toJSON()['individual'][validatorAddress.toHuman()] ? eraPoints.toJSON()['individual'][validatorAddress.toHuman()] : 0
 
-      let voters = 0;
-      for (const staking of nominatorStaking) {
-        if (staking.nominators.includes(validatorAddress)) {
-          voters++
-        }
+    let voters = 0;
+    for (const staking of nominatorsStakings) {
+      if (staking.nominators.includes(validatorAddress)) {
+        voters++
       }
+    }
 
-      const validatorEraPoints = eraPoints.toJSON()['individual'][validatorAddress.toHuman()] ? eraPoints.toJSON()['individual'][validatorAddress.toHuman()] : 0
+    const {identity} = await infoPromise
+    return {
+      ...validatorStaking,
+      displayName: getDisplayName(identity),
+      voters: voters,
+      eraPoints: validatorEraPoints,
+    } as MyDeriveStakingAccount
 
-      const [validator,{identity}] = [await validatorPromise, await infoPromise]
-      return {
-        ...validator,
-        displayName: getDisplayName(identity),
-        voters: voters,
-        eraPoints: validatorEraPoints,
-      } as MyDeriveStakingAccount
-      
-    })
-  )
+  }))
 
   return myValidatorStaking
 }
@@ -86,7 +49,7 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
   const {api,eraIndex} = request
   const eraPointsPromise = api.query.staking.erasRewardPoints(eraIndex);
   logger.debug(`nominators...`)
-  const nominatorStakingPromise = _getNominatorStaking(api,logger)
+  const nominatorStakingPromise = _getNominatorStaking(api)
   const [nominatorStaking,eraPoints] = [await nominatorStakingPromise, await eraPointsPromise]
   logger.debug(`validators...`)
   const myValidatorStaking = await _getMyValidatorStaking(api,nominatorStaking,eraPoints)
