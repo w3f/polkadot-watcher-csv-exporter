@@ -6,16 +6,33 @@ import { EraRewardPoints } from '@polkadot/types/interfaces';
 import { getDisplayName, initFile, closeFile } from './utils';
 import { WriteStream } from 'fs';
 
-const _getNominatorStaking = async (api: ApiPromise): Promise<DeriveStakingAccount[]> =>{
+const _getNominatorStaking = async (api: ApiPromise, logger: Logger): Promise<DeriveStakingAccount[]> =>{
 
   const nominators = await api.query.staking.nominators.entries();
   const nominatorAddresses = nominators.map(([address]) => ""+address.toHuman()[0]);
 
-  return api.derive.staking.accounts(nominatorAddresses)
+  logger.debug(`the nominator addresses size is ${nominatorAddresses.length}`)
+
+  //A to big nominators set could make crush the API => Chunk splitting
+  const size = 4000
+  const nominatorAddressesChucked = []
+  for (let i = 0; i < nominatorAddresses.length; i += size) {
+    const chunk = nominatorAddresses.slice(i, i + size)
+    nominatorAddressesChucked.push(chunk)
+  } 
+
+  const nominatorsStakings = []
+  for (const chunk of nominatorAddressesChucked) {
+    logger.debug(`the handled chunk size is ${chunk.length}`)
+    nominatorsStakings.push(...await api.derive.staking.accounts(chunk))
+  }
+
+  return nominatorsStakings
 }
 
-const _getMyValidatorStaking = async (api: ApiPromise, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints): Promise<DeriveStakingAccount[]> =>{
+const _getMyValidatorStaking = async (api: ApiPromise, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, logger: Logger): Promise<DeriveStakingAccount[]> =>{
   const validatorsAddresses = await api.query.session.validators();
+  logger.debug(`the validator addresses size is ${validatorsAddresses.length}`)
   const validatorsStakings = await api.derive.staking.accounts(validatorsAddresses)
 
   const myValidatorStaking = Promise.all ( validatorsStakings.map( async validatorStaking => {
@@ -50,10 +67,10 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
   const {api,eraIndex} = request
   const eraPointsPromise = api.query.staking.erasRewardPoints(eraIndex);
   logger.debug(`nominators...`)
-  const nominatorStakingPromise = _getNominatorStaking(api)
+  const nominatorStakingPromise = _getNominatorStaking(api, logger)
   const [nominatorStaking,eraPoints] = [await nominatorStakingPromise, await eraPointsPromise]
   logger.debug(`validators...`)
-  const myValidatorStaking = await _getMyValidatorStaking(api,nominatorStaking,eraPoints)
+  const myValidatorStaking = await _getMyValidatorStaking(api,nominatorStaking,eraPoints, logger)
 
   return {
     eraPoints,
