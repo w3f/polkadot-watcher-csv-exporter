@@ -3,7 +3,6 @@ dist/
 charts/
 helmfile.d/
 .circleci/
-config/
 scripts/
 test/
 data-csv/

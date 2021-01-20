@@ -2,7 +2,7 @@ environment: production
 
 image:
   repo: web3f/polkadot-watcher-csv-exporter
-  tag: v0.3.19
+  tag: v0.3.20
 
 config:
   endpoint: "wss://cc3-3.kusama.network"
