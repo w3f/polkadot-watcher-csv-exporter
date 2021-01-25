@@ -5,6 +5,7 @@ import { ApiPromise } from '@polkadot/api';
 import { EraRewardPoints } from '@polkadot/types/interfaces';
 import { getDisplayName, initFile, closeFile } from './utils';
 import { WriteStream } from 'fs';
+import { DeriveEraExposure } from '@polkadot/api-derive/staking/types' 
 
 const _getNominatorStaking = async (api: ApiPromise, logger: Logger): Promise<DeriveStakingAccount[]> =>{
 
@@ -14,7 +15,7 @@ const _getNominatorStaking = async (api: ApiPromise, logger: Logger): Promise<De
   logger.debug(`the nominator addresses size is ${nominatorAddresses.length}`)
 
   //A to big nominators set could make crush the API => Chunk splitting
-  const size = 4000
+  const size = 3000
   const nominatorAddressesChucked = []
   for (let i = 0; i < nominatorAddresses.length; i += size) {
     const chunk = nominatorAddresses.slice(i, i + size)
@@ -30,7 +31,7 @@ const _getNominatorStaking = async (api: ApiPromise, logger: Logger): Promise<De
   return nominatorsStakings
 }
 
-const _getMyValidatorStaking = async (api: ApiPromise, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, logger: Logger): Promise<DeriveStakingAccount[]> =>{
+const _getMyValidatorStaking = async (api: ApiPromise, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<DeriveStakingAccount[]> =>{
   const validatorsAddresses = await api.query.session.validators();
   logger.debug(`the validator addresses size is ${validatorsAddresses.length}`)
   const validatorsStakings = await api.derive.staking.accounts(validatorsAddresses)
@@ -41,6 +42,8 @@ const _getMyValidatorStaking = async (api: ApiPromise, nominatorsStakings: Deriv
     const infoPromise = api.derive.accounts.info(validatorAddress);
 
     const validatorEraPoints = eraPoints.toJSON()['individual'][validatorAddress.toHuman()] ? eraPoints.toJSON()['individual'][validatorAddress.toHuman()] : 0
+
+    const exposure = eraExposures.validators[validatorAddress.toHuman()] ? eraExposures.validators[validatorAddress.toHuman()] : {total:0,own:0,others:[]}
 
     let voters = 0;
     for (const staking of nominatorsStakings) {
@@ -54,6 +57,7 @@ const _getMyValidatorStaking = async (api: ApiPromise, nominatorsStakings: Deriv
       ...validatorStaking,
       displayName: getDisplayName(identity),
       voters: voters,
+      exposure: exposure,
       eraPoints: validatorEraPoints,
     } as MyDeriveStakingAccount
 
@@ -66,11 +70,12 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
   logger.debug(`gathering some data from the chain...`)
   const {api,eraIndex} = request
   const eraPointsPromise = api.query.staking.erasRewardPoints(eraIndex);
+  const eraExposures = await api.derive.staking.eraExposure(eraIndex)
   logger.debug(`nominators...`)
   const nominatorStakingPromise = _getNominatorStaking(api, logger)
   const [nominatorStaking,eraPoints] = [await nominatorStakingPromise, await eraPointsPromise]
   logger.debug(`validators...`)
-  const myValidatorStaking = await _getMyValidatorStaking(api,nominatorStaking,eraPoints, logger)
+  const myValidatorStaking = await _getMyValidatorStaking(api,nominatorStaking,eraPoints, eraExposures, logger)
 
   return {
     eraPoints,
