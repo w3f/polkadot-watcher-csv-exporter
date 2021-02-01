@@ -71,6 +71,7 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
   const {api,eraIndex} = request
   const eraPointsPromise = api.query.staking.erasRewardPoints(eraIndex);
   const eraExposures = await api.derive.staking.eraExposure(eraIndex)
+  const totalIssuance =  await api.query.balances.totalIssuance()
   logger.debug(`nominators...`)
   const nominatorStakingPromise = _getNominatorStaking(api, logger)
   const [nominatorStaking,eraPoints] = [await nominatorStakingPromise, await eraPointsPromise]
@@ -79,6 +80,7 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
 
   return {
     eraPoints,
+    totalIssuance,
     nominatorStaking,
     myValidatorStaking
   } as ChainData
@@ -109,10 +111,10 @@ const _writeNominatorSessionCSV = async (request: WriteNominatorCSVRequest, logg
 }
 
 const _writeFileValidatorSession = (file: WriteStream, request: WriteValidatorCSVRequest): void => {
-  const { eraIndex, sessionIndex, blockNumber, myValidatorStaking } = request
-  file.write(`era,session,block_number,name,stash_address,controller_address,commission_percent,self_stake,total_stake,num_stakers,voters,era_points\n`);
+  const { eraIndex, sessionIndex, blockNumber, myValidatorStaking, totalIssuance } = request
+  file.write(`era,session,block_number,name,stash_address,controller_address,commission_percent,self_stake,total_stake,num_stakers,voters,era_points,total_issuance\n`);
   for (const staking of myValidatorStaking) {
-    file.write(`${eraIndex},${sessionIndex},${blockNumber},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},${staking.voters},${staking.eraPoints}\n`);
+    file.write(`${eraIndex},${sessionIndex},${blockNumber},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},${staking.voters},${staking.eraPoints},${totalIssuance}\n`);
   }
 }
 
