@@ -1,5 +1,5 @@
 import { ApiPromise } from '@polkadot/api';
-import { EraIndex, SessionIndex, BlockNumber, EraRewardPoints, Balance } from '@polkadot/types/interfaces';
+import { EraIndex, SessionIndex, BlockNumber, EraRewardPoints, Balance, BalanceOf } from '@polkadot/types/interfaces';
 import { Compact } from '@polkadot/types';
 import { DeriveStakingAccount } from '@polkadot/api-derive/staking/types';
 
@@ -44,6 +44,7 @@ export interface WriteCSVRequest{
   sessionIndex: SessionIndex; 
   blockNumber: Compact<BlockNumber>;
   totalIssuance?: Balance;
+  validatorRewardsPreviousEra?: BalanceOf
 }
 
 export interface WriteNominatorCSVRequest extends WriteCSVRequest{
@@ -57,6 +58,7 @@ export interface WriteValidatorCSVRequest extends WriteCSVRequest{
 export interface ChainData {
   eraPoints: EraRewardPoints;
   totalIssuance: Balance;
+  validatorRewardsPreviousEra: BalanceOf
   nominatorStaking: DeriveStakingAccount[];
   myValidatorStaking: MyDeriveStakingAccount[];
 }

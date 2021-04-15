@@ -6,6 +6,7 @@ import { EraRewardPoints } from '@polkadot/types/interfaces';
 import { getDisplayName, initFile, closeFile } from './utils';
 import { WriteStream } from 'fs';
 import { DeriveEraExposure } from '@polkadot/api-derive/staking/types' 
+import BN from 'bn.js';
 
 const _getNominatorStaking = async (api: ApiPromise, logger: Logger): Promise<DeriveStakingAccount[]> =>{
 
@@ -72,6 +73,7 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
   const eraPointsPromise = api.query.staking.erasRewardPoints(eraIndex);
   const eraExposures = await api.derive.staking.eraExposure(eraIndex)
   const totalIssuance =  await api.query.balances.totalIssuance()
+  const validatorRewardsPreviousEra = (await api.query.staking.erasValidatorReward(eraIndex.sub(new BN(1)))).unwrap();
   logger.debug(`nominators...`)
   const nominatorStakingPromise = _getNominatorStaking(api, logger)
   const [nominatorStaking,eraPoints] = [await nominatorStakingPromise, await eraPointsPromise]
@@ -81,6 +83,7 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
   return {
     eraPoints,
     totalIssuance,
+    validatorRewardsPreviousEra,
     nominatorStaking,
     myValidatorStaking
   } as ChainData
@@ -111,10 +114,10 @@ const _writeNominatorSessionCSV = async (request: WriteNominatorCSVRequest, logg
 }
 
 const _writeFileValidatorSession = (file: WriteStream, request: WriteValidatorCSVRequest): void => {
-  const { eraIndex, sessionIndex, blockNumber, myValidatorStaking, totalIssuance } = request
-  file.write(`era,session,block_number,name,stash_address,controller_address,commission_percent,self_stake,total_stake,num_stakers,voters,era_points,total_issuance\n`);
+  const { eraIndex, sessionIndex, blockNumber, myValidatorStaking, totalIssuance, validatorRewardsPreviousEra } = request
+  file.write(`era,session,block_number,name,stash_address,controller_address,commission_percent,self_stake,total_stake,num_stakers,voters,era_points,total_issuance,validator_rewards_previous_era\n`);
   for (const staking of myValidatorStaking) {
-    file.write(`${eraIndex},${sessionIndex},${blockNumber},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},${staking.voters},${staking.eraPoints},${totalIssuance}\n`);
+    file.write(`${eraIndex},${sessionIndex},${blockNumber},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},${staking.voters},${staking.eraPoints},${totalIssuance},${validatorRewardsPreviousEra}\n`);
   }
 }
 
