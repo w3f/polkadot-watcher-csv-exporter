@@ -44,7 +44,7 @@ export interface WriteCSVRequest{
   sessionIndex: SessionIndex; 
   blockNumber: Compact<BlockNumber>;
   totalIssuance?: Balance;
-  validatorRewardsPreviousEra?: BalanceOf
+  validatorRewardsPreviousEra?: BalanceOf;
 }
 
 export interface WriteNominatorCSVRequest extends WriteCSVRequest{
@@ -58,7 +58,7 @@ export interface WriteValidatorCSVRequest extends WriteCSVRequest{
 export interface ChainData {
   eraPoints: EraRewardPoints;
   totalIssuance: Balance;
-  validatorRewardsPreviousEra: BalanceOf
+  validatorRewardsPreviousEra: BalanceOf;
   nominatorStaking: DeriveStakingAccount[];
   myValidatorStaking: MyDeriveStakingAccount[];
 }
