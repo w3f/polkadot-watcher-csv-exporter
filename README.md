@@ -14,7 +14,7 @@ All the relevant data model code is placed in [writeDataCSV](src/writeDataCSV.ts
 git clone https://github.com/w3f/polkadot-watcher-csv-exporter.git
 cd polkadot-watcher-csv-exporter
 cp config/main.sample.yaml config/main.yaml 
-#just the fist time
+#just the first time
 
 yarn
 yarn build
