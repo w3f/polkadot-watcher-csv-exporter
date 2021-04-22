@@ -3,14 +3,15 @@ import { BlockNumber, Header, SessionIndex, EraIndex } from '@polkadot/types/int
 import { Compact } from '@polkadot/types/codec';
 import { Logger } from '@w3f/logger';
 import { Text } from '@polkadot/types/primitive';
-import { writeSessionCSV, writeEraCSV } from './writeDataCSV'
+import { gatherChainData } from './dataGatherer'
 import { DeriveSessionProgress } from '@polkadot/api-derive/session/types'
-import { BucketGCP } from './bucketGCP'
+import { BucketGCP } from './fileUploader'
 
 import {
     InputConfig, BucketUploadConfig,
 } from './types';
 import { isDirEmpty, isDirExistent, makeDir } from './utils';
+import { writeEraCSV, writeSessionCSV } from './csvWriter';
 
 export class Subscriber {
     private chain: Text;
@@ -160,13 +161,16 @@ export class Subscriber {
     private _writeEraCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> => {
       const network = this.chain.toString().toLowerCase()
       const request = {api:this.api,network,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
-      await writeEraCSV(request, this.logger)
+      const chainData = await gatherChainData(request, this.logger)
+      await writeSessionCSV(request, chainData, this.logger)
+      await writeEraCSV(request, chainData, this.logger)
     }
 
     private _writeSessionCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> => {
       const network = this.chain.toString().toLowerCase()
       const request = {api:this.api,network,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
-      await writeSessionCSV(request, this.logger)
+      const chainData = await gatherChainData(request, this.logger)
+      await writeSessionCSV(request, chainData, this.logger)
     }
 
     private _isEndEraBlock = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{
