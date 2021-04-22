@@ -1,3 +1,5 @@
+/*eslint @typescript-eslint/no-use-before-define: ["error", { "variables": false }]*/
+
 import { WriteStream } from 'fs';
 import { initFile, closeFile } from './utils';
 import { WriteCSVRequest, WriteValidatorCSVRequest, WriteNominatorCSVRequest, ChainData } from "./types";

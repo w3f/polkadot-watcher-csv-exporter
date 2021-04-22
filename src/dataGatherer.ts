@@ -1,3 +1,5 @@
+/*eslint @typescript-eslint/no-use-before-define: ["error", { "variables": false }]*/
+
 import { DeriveStakingAccount } from '@polkadot/api-derive/staking/types';
 import { MyDeriveStakingAccount, WriteCSVRequest, ChainData } from "./types";
 import { Logger } from '@w3f/logger';
