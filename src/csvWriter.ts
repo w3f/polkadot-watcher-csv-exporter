@@ -70,8 +70,8 @@ const _writeNominatorSessionCSV = async (request: WriteNominatorCSVRequest, logg
 
 const _writeFileValidatorSession = (file: WriteStream, request: WriteValidatorCSVRequest): void => {
   const { eraIndex, sessionIndex, blockNumber, myValidatorStaking, totalIssuance, validatorRewardsPreviousEra } = request
-  file.write(`era,session,block_number,name,stash_address,controller_address,commission_percent,self_stake,total_stake,num_stakers,voters,era_points,total_issuance,validator_rewards_previous_era\n`);
+  file.write(`era,session,block_number,name,stash_address,controller_address,commission_percent,self_stake,total_stake,num_stakers,stakers,voters,era_points,total_issuance,validator_rewards_previous_era\n`);
   for (const staking of myValidatorStaking) {
-    file.write(`${eraIndex},${sessionIndex},${blockNumber},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},${staking.voters},${staking.eraPoints},${totalIssuance},${validatorRewardsPreviousEra}\n`);
+    file.write(`${eraIndex},${sessionIndex},${blockNumber},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},"${staking.exposure.others.map(staker=>staker.who).join(`,`)}",${staking.voters},${staking.eraPoints},${totalIssuance},${validatorRewardsPreviousEra}\n`);
   }
 }
