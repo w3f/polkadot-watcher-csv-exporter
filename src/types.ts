@@ -12,6 +12,7 @@ export interface InputConfig {
     endSessionBlockDistance: number;
     bucketUpload: BucketUploadConfig;
     cronjob: CronJobConfig;
+    apiChunkSize?: number;
 }
 
 interface DebugConfig{
@@ -38,6 +39,7 @@ export interface MyDeriveStakingAccount extends DeriveStakingAccount {
 
 export interface WriteCSVRequest{
   api: ApiPromise;
+  apiChunkSize: number;
   network: string; 
   exportDir: string; 
   eraIndex: EraIndex; 

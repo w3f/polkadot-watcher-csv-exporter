@@ -6,6 +6,7 @@ import { Text } from '@polkadot/types/primitive';
 import { gatherChainData } from './dataGatherer'
 import { DeriveSessionProgress } from '@polkadot/api-derive/session/types'
 import { BucketGCP } from './fileUploader'
+import { apiChunkSize } from './constants'
 
 import {
     InputConfig, BucketUploadConfig,
@@ -16,6 +17,7 @@ import { writeEraCSV, writeSessionCSV } from './csvWriter';
 export class Subscriber {
     private chain: Text;
     private api: ApiPromise;
+    private apiChunkSize: number;
     private endpoint: string;
 
     private exportDir: string;
@@ -42,6 +44,7 @@ export class Subscriber {
         this.isBucketEnabled = cfg.bucketUpload.enabled;
         this.isCronjobEnabled = cfg.cronjob.enabled;
         this.progress_delta = cfg.endSessionBlockDistance
+        this.apiChunkSize = cfg.apiChunkSize ? cfg.apiChunkSize : apiChunkSize
         if(this.isBucketEnabled) this._initBucket(cfg.bucketUpload);
     }
 
@@ -160,7 +163,7 @@ export class Subscriber {
 
     private _writeEraCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> => {
       const network = this.chain.toString().toLowerCase()
-      const request = {api:this.api,network,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
+      const request = {api:this.api,network,apiChunkSize:this.apiChunkSize,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
       const chainData = await gatherChainData(request, this.logger)
       await writeSessionCSV(request, chainData, this.logger)
       await writeEraCSV(request, chainData, this.logger)
@@ -168,7 +171,7 @@ export class Subscriber {
 
     private _writeSessionCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> => {
       const network = this.chain.toString().toLowerCase()
-      const request = {api:this.api,network,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
+      const request = {api:this.api,network,apiChunkSize:this.apiChunkSize,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
       const chainData = await gatherChainData(request, this.logger)
       await writeSessionCSV(request, chainData, this.logger)
     }

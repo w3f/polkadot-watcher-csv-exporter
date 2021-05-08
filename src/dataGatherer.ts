@@ -18,13 +18,13 @@ export const gatherChainData = async (request: WriteCSVRequest, logger: Logger):
 
 const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<ChainData> =>{
   logger.debug(`gathering some data from the chain...`)
-  const {api,eraIndex} = request
+  const {api,apiChunkSize,eraIndex} = request
   const eraPointsPromise = api.query.staking.erasRewardPoints(eraIndex);
   const eraExposures = await api.derive.staking.eraExposure(eraIndex)
   const totalIssuance =  await api.query.balances.totalIssuance()
   const validatorRewardsPreviousEra = (await api.query.staking.erasValidatorReward(eraIndex.sub(new BN(1)))).unwrap();
   logger.debug(`nominators...`)
-  const nominatorStakingPromise = _getNominatorStaking(api, logger)
+  const nominatorStakingPromise = _getNominatorStaking(api,apiChunkSize,logger)
   const [nominatorStaking,eraPoints] = [await nominatorStakingPromise, await eraPointsPromise]
   logger.debug(`validators...`)
   const myValidatorStaking = await _getMyValidatorStaking(api,nominatorStaking,eraPoints, eraExposures, logger)
@@ -38,7 +38,7 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
   } as ChainData
 }
 
-const _getNominatorStaking = async (api: ApiPromise, logger: Logger): Promise<DeriveStakingAccount[]> =>{
+const _getNominatorStaking = async (api: ApiPromise, apiChunkSize: number, logger: Logger): Promise<DeriveStakingAccount[]> =>{
 
   const nominators = await api.query.staking.nominators.entries();
   const nominatorAddresses = nominators.map(([address]) => ""+address.toHuman()[0]);
@@ -46,14 +46,14 @@ const _getNominatorStaking = async (api: ApiPromise, logger: Logger): Promise<De
   logger.debug(`the nominator addresses size is ${nominatorAddresses.length}`)
 
   //A to big nominators set could make crush the API => Chunk splitting
-  const size = 3000
+  const size = apiChunkSize
   const nominatorAddressesChucked = []
   for (let i = 0; i < nominatorAddresses.length; i += size) {
     const chunk = nominatorAddresses.slice(i, i + size)
     nominatorAddressesChucked.push(chunk)
   } 
 
-  const nominatorsStakings = []
+  const nominatorsStakings: DeriveStakingAccount[] = []
   for (const chunk of nominatorAddressesChucked) {
     logger.debug(`the handled chunk size is ${chunk.length}`)
     nominatorsStakings.push(...await api.derive.staking.accounts(chunk))
