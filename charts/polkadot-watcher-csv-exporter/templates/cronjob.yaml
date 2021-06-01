@@ -8,9 +8,9 @@ metadata:
 spec:
   schedule: {{ .Values.cronjob.schedule | quote }}
   concurrencyPolicy: Forbid
-  activeDeadlineSeconds: 1200
   jobTemplate:
     spec:
+      activeDeadlineSeconds: 1200
       template:
         metadata:
           labels:
