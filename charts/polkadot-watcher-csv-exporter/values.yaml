@@ -2,10 +2,10 @@ environment: production
 
 image:
   repo: web3f/polkadot-watcher-csv-exporter
-  tag: v0.5.6
+  tag: v0.5.7
 
 config:
-  endpoint: "wss://cc3-0.kusama.network"
+  endpoint: "wss://kusama-rpc.polkadot.io"
   port: 3000
   logLevel: info
   debug:
@@ -21,6 +21,7 @@ config:
     gcpBucketName: '' 
   cronjob:
     enabled: true  
+    timeout: true
 
 secret:
   gcpServiceAccountValue: |
