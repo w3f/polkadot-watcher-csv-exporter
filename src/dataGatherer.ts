@@ -40,7 +40,9 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
 
 const _getNominatorStaking = async (api: ApiPromise, apiChunkSize: number, logger: Logger): Promise<DeriveStakingAccount[]> =>{
 
+  logger.debug(`getting the nominator entries...`)
   const nominators = await api.query.staking.nominators.entries();
+  logger.debug(`got ${nominators.length} entries !!`)
   const nominatorAddresses = nominators.map(([address]) => ""+address.toHuman()[0]);
 
   logger.debug(`the nominator addresses size is ${nominatorAddresses.length}`)
