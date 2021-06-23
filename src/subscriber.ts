@@ -69,6 +69,9 @@ export class Subscriber {
             this.logger.error(JSON.stringify("initAPI error:"+JSON.stringify(error)))
             process.exit(1)
           }
+          else{
+            this.logger.error(JSON.stringify("API error:"+JSON.stringify(error)))
+          }
         })
         this.api = await ApiPromise.create({ provider });
         
