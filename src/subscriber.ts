@@ -49,7 +49,14 @@ export class Subscriber {
     }
 
     public start = async (): Promise<void> => {
-        await this._initAPI();
+        
+        try {
+          await this._initAPI();
+        } catch (error) {
+          this.logger.error("initAPI error... exiting: "+JSON.stringify(error))
+          process.exit(1)
+        }
+
         await this._initInstanceVariables();
         this._initExportDir();
 
@@ -64,16 +71,17 @@ export class Subscriber {
 
     private _initAPI = async (): Promise<void> =>{
         const provider = new WsProvider(this.endpoint);
-        provider.on('error', error => {
-          if(this.api == undefined) {
-            this.logger.error(JSON.stringify("initAPI error:"+JSON.stringify(error)))
-            process.exit(1)
-          }
-          else{
-            this.logger.error(JSON.stringify("API error:"+JSON.stringify(error)))
-          }
-        })
-        this.api = await ApiPromise.create({ provider });
+        
+        this.api = new ApiPromise({provider})
+        if(this.api){
+          this.api.on("error", error => {
+            if( error.toString().includes("FATAL") || JSON.stringify(error).includes("FATAL") ){
+              this.logger.error("The API had a FATAL error... exiting!")
+              process.exit(1)
+            }
+          })
+        }
+        await this.api.isReadyOrError;
         
         this.chain = await this.api.rpc.system.chain();
         const [nodeName, nodeVersion] = await Promise.all([
