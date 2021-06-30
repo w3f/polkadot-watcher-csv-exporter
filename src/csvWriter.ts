@@ -2,7 +2,7 @@
 
 import { WriteStream } from 'fs';
 import { initFile, closeFile } from './utils';
-import { WriteCSVRequest, WriteValidatorCSVRequest, WriteNominatorCSVRequest, ChainData } from "./types";
+import { WriteCSVRequest, WriteValidatorCSVRequest, WriteNominatorCSVRequest, ChainData, WriteCSVHistoricalRequest, WriteValidatorHistoricCSVRequest } from "./types";
 import { Logger } from '@w3f/logger';
 
 export const writeSessionCSV = async (request: WriteCSVRequest, chainData: ChainData, logger: Logger): Promise<void> =>{
@@ -12,6 +12,10 @@ export const writeSessionCSV = async (request: WriteCSVRequest, chainData: Chain
 
 export const writeEraCSV = async (request: WriteCSVRequest, chainData: ChainData, logger: Logger): Promise<void> =>{
   await _writeValidatorEraCSV({...request,...chainData} as WriteValidatorCSVRequest, logger)
+}
+
+export const writeHistoricErasCSV = async (request: WriteCSVHistoricalRequest, chainData: ChainData[], logger: Logger): Promise<void> =>{
+  await _writeValidatorHistoricEraCSV({...request, erasData: chainData} as WriteValidatorHistoricCSVRequest, logger)
 }
 
 const _writeValidatorSessionCSV = async (request: WriteValidatorCSVRequest, logger: Logger): Promise<void> => {
@@ -27,6 +31,37 @@ const _writeValidatorSessionCSV = async (request: WriteValidatorCSVRequest, logg
   await closeFile(file)
 
   logger.info(`Finished writing validators CSV for session ${sessionIndex}`)
+}
+
+const _writeValidatorHistoricEraCSV = async (request: WriteValidatorHistoricCSVRequest, logger: Logger): Promise<void> => {
+  const { network, exportDir, erasData } = request
+
+  erasData.forEach(async eraData => {
+    logger.info(`Writing validators CSV for era ${eraData.eraIndex}`)
+
+    const fileName = `${network}_validators_era_${eraData.eraIndex}.csv`
+    const file = initFile(exportDir, fileName, logger)
+
+    const requestTranslation = {
+      api: request.api,
+      network: request.network, 
+      exportDir: request.exportDir, 
+      eraIndex: eraData.eraIndex, 
+      sessionIndex: null, 
+      blockNumber: null,
+      totalIssuance: eraData.totalIssuance,
+      validatorRewardsPreviousEra: eraData.validatorRewardsPreviousEra,
+      myValidatorStaking: eraData.myValidatorStaking,
+      
+    } as WriteValidatorCSVRequest
+
+    _writeFileValidatorSession(file,requestTranslation)
+
+    await closeFile(file)
+
+    logger.info(`Finished writing validators CSV for era ${eraData.eraIndex}`)
+
+  })
 }
 
 const _writeValidatorEraCSV = async (request: WriteValidatorCSVRequest, logger: Logger): Promise<void> => {
@@ -72,6 +107,6 @@ const _writeFileValidatorSession = (file: WriteStream, request: WriteValidatorCS
   const { eraIndex, sessionIndex, blockNumber, myValidatorStaking, totalIssuance, validatorRewardsPreviousEra } = request
   file.write(`era,session,block_number,name,stash_address,controller_address,commission_percent,self_stake,total_stake,num_stakers,stakers,voters,era_points,total_issuance,validator_rewards_previous_era\n`);
   for (const staking of myValidatorStaking) {
-    file.write(`${eraIndex},${sessionIndex},${blockNumber},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},"${staking.exposure.others.map(staker=>staker.who).join(`,`)}",${staking.voters},${staking.eraPoints},${totalIssuance},${validatorRewardsPreviousEra}\n`);
+    file.write(`${eraIndex},${sessionIndex ? sessionIndex : -1},${blockNumber ? blockNumber : -1},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},"${staking.exposure.others.map(staker=>staker.who).join(`,`)}",${staking.voters},${staking.eraPoints},${totalIssuance},${validatorRewardsPreviousEra}\n`);
   }
 }

@@ -3,7 +3,7 @@ import { BlockNumber, Header, SessionIndex, EraIndex } from '@polkadot/types/int
 import { Compact } from '@polkadot/types/codec';
 import { Logger } from '@w3f/logger';
 import { Text } from '@polkadot/types/primitive';
-import { gatherChainData } from './dataGatherer'
+import { gatherChainData, gatherChainDataHistorical } from './dataGatherer'
 import { DeriveSessionProgress } from '@polkadot/api-derive/session/types'
 import { BucketGCP } from './fileUploader'
 import { apiChunkSize } from './constants'
@@ -12,7 +12,7 @@ import {
     InputConfig, BucketUploadConfig,
 } from './types';
 import { isDirEmpty, isDirExistent, makeDir } from './utils';
-import { writeEraCSV, writeSessionCSV } from './csvWriter';
+import { writeEraCSV, writeHistoricErasCSV, writeSessionCSV } from './csvWriter';
 
 export class Subscriber {
     private chain: Text;
@@ -33,6 +33,9 @@ export class Subscriber {
     private isCSVUploadable: boolean;
 
     private progress_delta: number //20 = two minutes before the ending of the session/era
+
+    private historySize: number
+    private isHistoricEnabled: boolean
     
     constructor(
         cfg: InputConfig,
@@ -45,6 +48,8 @@ export class Subscriber {
         this.isCronjobEnabled = cfg.cronjob.enabled;
         this.progress_delta = cfg.endSessionBlockDistance
         this.apiChunkSize = cfg.apiChunkSize ? cfg.apiChunkSize : apiChunkSize
+        this.historySize = cfg.historic?.historySize ? cfg.historic.historySize : 5 //default
+        this.isHistoricEnabled = cfg.historic?.enabled ? cfg.historic.enabled : false
         if(this.isBucketEnabled) this._initBucket(cfg.bucketUpload);
     }
 
@@ -61,6 +66,8 @@ export class Subscriber {
         this._initExportDir();
 
         this.isDebugEnabled && await this._triggerDebugActions()
+
+        this.isHistoricEnabled && await this._triggerHistoricActions()
 
         await this._handleNewHeadSubscriptions();
     }
@@ -131,12 +138,23 @@ export class Subscriber {
       })
     }
 
+    private  _triggerHistoricActions = async (): Promise<void> => {
+      this.logger.info('Historic mode active')
+
+      this.logger.info(`starting the CSV writing for the last ${this.historySize} eras`)
+
+      this._lockCSVWrite()
+      await this._writeEraCSVHistorical()
+      this._setCSVUploadable(true)
+    }
+
     private _uploadCSVHandler = async (): Promise<void> => {
       if(!this.isCSVUploadable) return
       this._setCSVUploadable(false)
 
       await this._uploadToBucket()
       this.isCronjobEnabled && await this._handleCronJob()
+      this.isHistoricEnabled && await this._handleHistoricJob()
     }
 
     private _uploadToBucket = async (): Promise<void> =>{
@@ -145,6 +163,11 @@ export class Subscriber {
 
     private  _handleCronJob = async(): Promise<void> =>{
       this.logger.info(`cronjob successfully ending...`)
+      process.exit()
+    }
+
+    private  _handleHistoricJob = async(): Promise<void> =>{
+      this.logger.info(`historic era gathering successfully ending...`)
       process.exit()
     }
 
@@ -178,6 +201,14 @@ export class Subscriber {
       const chainData = await gatherChainData(request, this.logger)
       await writeSessionCSV(request, chainData, this.logger)
       await writeEraCSV(request, chainData, this.logger)
+    }
+
+    private _writeEraCSVHistorical = async (): Promise<void> => {
+      const network = this.chain.toString().toLowerCase()
+      const request = {api:this.api,network,exportDir:this.exportDir,historySize:this.historySize}
+      const chainData = await gatherChainDataHistorical(request, this.logger)
+
+      await writeHistoricErasCSV(request, chainData, this.logger)
     }
 
     private _writeSessionCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> => {

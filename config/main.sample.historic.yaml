@@ -1,0 +1,17 @@
+endpoint: "wss://kusama-rpc.polkadot.io/"
+port: 3000
+logLevel: info
+debug:
+  enabled: false
+  forceInitialWrite: false
+exportDir: "./data-csv"
+bucketUpload:
+  enabled: false
+  gcpServiceAccount: '~/Documents/serviceAccount.json'
+  gcpProject: 'project-12345'
+  gcpBucketName: 'my_bucket'
+cronjob:
+  enabled: false  
+historic:
+  enabled: true
+  historySize: 5  

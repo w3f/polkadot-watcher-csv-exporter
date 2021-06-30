@@ -13,6 +13,10 @@ export interface InputConfig {
     bucketUpload: BucketUploadConfig;
     cronjob: CronJobConfig;
     apiChunkSize?: number;
+    historic: {
+      enabled: boolean;
+      historySize: number;
+    }
 }
 
 interface DebugConfig{
@@ -49,6 +53,15 @@ export interface WriteCSVRequest{
   validatorRewardsPreviousEra?: BalanceOf;
 }
 
+export interface WriteCSVHistoricalRequest{
+  api: ApiPromise;
+  network: string; 
+  exportDir: string; 
+  totalIssuance?: Balance;
+  validatorRewardsPreviousEra?: BalanceOf;
+  historySize: number;
+}
+
 export interface WriteNominatorCSVRequest extends WriteCSVRequest{
   nominatorStaking: DeriveStakingAccount[];
 }
@@ -57,7 +70,12 @@ export interface WriteValidatorCSVRequest extends WriteCSVRequest{
   myValidatorStaking: MyDeriveStakingAccount[];
 }
 
+export interface WriteValidatorHistoricCSVRequest extends WriteCSVHistoricalRequest{
+  erasData: ChainData[]
+}
+
 export interface ChainData {
+  eraIndex?: EraIndex
   eraPoints: EraRewardPoints;
   totalIssuance: Balance;
   validatorRewardsPreviousEra: BalanceOf;

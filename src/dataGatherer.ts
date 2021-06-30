@@ -1,7 +1,7 @@
 /*eslint @typescript-eslint/no-use-before-define: ["error", { "variables": false }]*/
 
-import { DeriveStakingAccount } from '@polkadot/api-derive/staking/types';
-import { MyDeriveStakingAccount, WriteCSVRequest, ChainData } from "./types";
+import { DeriveStakingAccount,DeriveEraPoints } from '@polkadot/api-derive/staking/types';
+import { MyDeriveStakingAccount, WriteCSVRequest, ChainData, WriteCSVHistoricalRequest } from "./types";
 import { Logger } from '@w3f/logger';
 import { ApiPromise } from '@polkadot/api';
 import { EraRewardPoints } from '@polkadot/types/interfaces';
@@ -97,4 +97,92 @@ const _getMyValidatorStaking = async (api: ApiPromise, nominatorsStakings: Deriv
   }))
 
   return myValidatorStaking
+}
+
+// TODO get the validators waiting set
+// const getWaitingValidatorsAccountId = async (api: ApiPromise, logger: Logger) => {
+//     const skStashes = await api.query.staking.validators.keys()
+//     const stashes = skStashes.map(sk => sk.args)
+//     const active = await api.query.session.validators();
+//     const waiting = stashes.filter((s) => !active.includes(s.toString()));
+//     logger.info(waiting.length.toString())
+// }
+
+export const gatherChainDataHistorical = async (request: WriteCSVHistoricalRequest, logger: Logger): Promise<ChainData[]> =>{
+  logger.info(`Historical Data gathering triggered...`)
+  const data = await _gatherDataHistorical(request, logger)
+  logger.info(`Data have been gathered.`)
+  return data
+}
+
+const _gatherDataHistorical = async (request: WriteCSVHistoricalRequest, logger: Logger): Promise<ChainData[]> =>{
+  logger.debug(`gathering some data from the chain...`)
+  const {api,historySize} = request
+
+  const erasHistoric = await api.derive.staking.erasHistoric(false);
+  const eraIndexes = erasHistoric.slice(
+    Math.max(erasHistoric.length - historySize, 0)
+  )
+  logger.info(`Requested eras: ${eraIndexes.map(era => era.toString()).join(', ')}`);
+  logger.debug(`Gathering data ...`);
+
+  const [
+    erasPoints,
+    erasRewards,
+    erasExposures,
+  ] = await Promise.all([
+    api.derive.staking._erasPoints(eraIndexes,false),
+    api.derive.staking._erasRewards(eraIndexes,false),
+    api.derive.staking._erasExposure(eraIndexes,false),
+  ]);
+
+  const chainDataEras = Promise.all( eraIndexes.map( async index => {
+
+    const myValidatorStaking = await getEraValidatorStakingInfo(
+      api,
+      erasPoints.find(({ era }) => era.eq(index)),
+      erasExposures.find(({ era }) => era.eq(index)),
+    );
+    
+    return {
+      eraIndex: index,
+      eraPoints: await api.query.staking.erasRewardPoints(index),
+      totalIssuance: erasRewards.find(({ era }) => era.eq(index)).eraReward,
+      validatorRewardsPreviousEra: (await api.query.staking.erasValidatorReward(index.sub(new BN(1)))).unwrap(),
+      nominatorStaking: null,
+      myValidatorStaking: myValidatorStaking
+    } as ChainData
+  }))
+
+  return chainDataEras
+
+}
+
+const getEraValidatorStakingInfo = async (api: ApiPromise, eraPoints: DeriveEraPoints, eraExposure: DeriveEraExposure): Promise<MyDeriveStakingAccount[]> => {
+  const eraValidatorAddresses = Object.keys(eraExposure['validators']);
+  const eraNominatorAddresses = Object.keys(eraExposure['nominators']);
+  return Promise.all(eraValidatorAddresses.map(async validatorAddress => {
+    const validatorStaking = await api.derive.staking.account(validatorAddress);
+    const { identity } = await api.derive.accounts.info(validatorAddress);
+    const validatorEraPoints = eraPoints['validators'][validatorAddress] ? eraPoints['validators'][validatorAddress] : 0;
+    const exposure = eraExposure.validators[validatorAddress] ? eraExposure.validators[validatorAddress] : {total:0,own:0,others:[]}  
+    
+    let voters = 0;
+    for (const nominator of eraNominatorAddresses) {
+      const nominations = eraExposure.nominators[nominator]
+      for (const nomination of nominations) {
+        if(nomination.validatorId.includes(validatorAddress)){
+          voters ++
+        }
+      }
+    }
+  
+    return {
+      ...validatorStaking,
+      displayName: getDisplayName(identity),
+      voters: voters,
+      exposure: exposure,
+      eraPoints: validatorEraPoints,
+    } as MyDeriveStakingAccount
+  }))
 }
