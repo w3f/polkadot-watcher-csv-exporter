@@ -16,7 +16,7 @@ export interface InputConfig {
     historic: {
       enabled: boolean;
       historySize: number;
-    }
+    };
 }
 
 interface DebugConfig{
@@ -71,11 +71,11 @@ export interface WriteValidatorCSVRequest extends WriteCSVRequest{
 }
 
 export interface WriteValidatorHistoricCSVRequest extends WriteCSVHistoricalRequest{
-  erasData: ChainData[]
+  erasData: ChainData[];
 }
 
 export interface ChainData {
-  eraIndex?: EraIndex
+  eraIndex?: EraIndex;
   eraPoints: EraRewardPoints;
   totalIssuance: Balance;
   validatorRewardsPreviousEra: BalanceOf;
