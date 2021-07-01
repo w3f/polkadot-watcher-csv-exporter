@@ -104,9 +104,14 @@ const _writeNominatorSessionCSV = async (request: WriteNominatorCSVRequest, logg
 }
 
 const _writeFileValidatorSession = (file: WriteStream, request: WriteValidatorCSVRequest): void => {
-  const { eraIndex, sessionIndex, blockNumber, myValidatorStaking, totalIssuance, validatorRewardsPreviousEra } = request
-  file.write(`era,session,block_number,name,stash_address,controller_address,commission_percent,self_stake,total_stake,num_stakers,stakers,voters,era_points,total_issuance,validator_rewards_previous_era\n`);
+  const { eraIndex, sessionIndex, blockNumber, myValidatorStaking, myWaitingValidatorStaking, totalIssuance, validatorRewardsPreviousEra } = request
+  file.write(`era,session,block_number,active,name,stash_address,controller_address,commission_percent,self_stake,total_stake,num_stakers,stakers,voters,era_points,total_issuance,validator_rewards_previous_era\n`);
   for (const staking of myValidatorStaking) {
-    file.write(`${eraIndex},${sessionIndex ? sessionIndex : -1},${blockNumber ? blockNumber : -1},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},"${staking.exposure.others.map(staker=>staker.who).join(`,`)}",${staking.voters},${staking.eraPoints},${totalIssuance},${validatorRewardsPreviousEra}\n`);
+    file.write(`${eraIndex},${sessionIndex ? sessionIndex : -1},${blockNumber ? blockNumber : -1},${1},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},"${staking.exposure.others.map(staker=>staker.who).join(`,`)}",${staking.voters},${staking.eraPoints},${totalIssuance},${validatorRewardsPreviousEra}\n`);
+  }
+  if(myWaitingValidatorStaking){
+    for (const staking of myWaitingValidatorStaking) {
+      file.write(`${eraIndex},${sessionIndex ? sessionIndex : -1},${blockNumber ? blockNumber : -1},${0},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},"${staking.exposure.others.map(staker=>staker.who).join(`,`)}",${staking.voters},${staking.eraPoints},${totalIssuance},${validatorRewardsPreviousEra}\n`);
+    }
   }
 }
