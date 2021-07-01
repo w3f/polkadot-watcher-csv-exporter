@@ -68,6 +68,7 @@ export interface WriteNominatorCSVRequest extends WriteCSVRequest{
 
 export interface WriteValidatorCSVRequest extends WriteCSVRequest{
   myValidatorStaking: MyDeriveStakingAccount[];
+  myWaitingValidatorStaking?: MyDeriveStakingAccount[];
 }
 
 export interface WriteValidatorHistoricCSVRequest extends WriteCSVHistoricalRequest{
@@ -81,4 +82,5 @@ export interface ChainData {
   validatorRewardsPreviousEra: BalanceOf;
   nominatorStaking: DeriveStakingAccount[];
   myValidatorStaking: MyDeriveStakingAccount[];
+  myWaitingValidatorStaking?: MyDeriveStakingAccount[];
 }

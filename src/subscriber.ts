@@ -3,7 +3,7 @@ import { BlockNumber, Header, SessionIndex, EraIndex } from '@polkadot/types/int
 import { Compact } from '@polkadot/types/codec';
 import { Logger } from '@w3f/logger';
 import { Text } from '@polkadot/types/primitive';
-import { gatherChainData, gatherChainDataHistorical } from './dataGatherer'
+import { gatherChainData } from './dataGatherer'
 import { DeriveSessionProgress } from '@polkadot/api-derive/session/types'
 import { BucketGCP } from './fileUploader'
 import { apiChunkSize } from './constants'
@@ -13,6 +13,7 @@ import {
 } from './types';
 import { isDirEmpty, isDirExistent, makeDir } from './utils';
 import { writeEraCSV, writeHistoricErasCSV, writeSessionCSV } from './csvWriter';
+import { gatherChainDataHistorical } from './dataGathererHistoric';
 
 export class Subscriber {
     private chain: Text;
