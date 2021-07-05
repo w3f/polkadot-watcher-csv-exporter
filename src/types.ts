@@ -59,7 +59,7 @@ export interface WriteCSVHistoricalRequest{
   exportDir: string; 
   totalIssuance?: Balance;
   validatorRewardsPreviousEra?: BalanceOf;
-  eraIndexes: EraIndex[]
+  eraIndexes: EraIndex[];
 }
 
 export interface WriteNominatorCSVRequest extends WriteCSVRequest{
