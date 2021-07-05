@@ -17,12 +17,8 @@ export const gatherChainDataHistorical = async (request: WriteCSVHistoricalReque
 
 const _gatherDataHistorical = async (request: WriteCSVHistoricalRequest, logger: Logger): Promise<ChainData[]> =>{
   logger.debug(`gathering some data from the chain...`)
-  const {api,historySize} = request
+  const {api,eraIndexes} = request
 
-  const erasHistoric = await api.derive.staking.erasHistoric(false);
-  const eraIndexes = erasHistoric.slice(
-    Math.max(erasHistoric.length - historySize, 0)
-  )
   logger.info(`Requested eras: ${eraIndexes.map(era => era.toString()).join(', ')}`);
   logger.debug(`Gathering data ...`);
 

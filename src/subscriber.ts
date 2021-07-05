@@ -206,10 +206,28 @@ export class Subscriber {
 
     private _writeEraCSVHistorical = async (): Promise<void> => {
       const network = this.chain.toString().toLowerCase()
-      const request = {api:this.api,network,exportDir:this.exportDir,historySize:this.historySize}
-      const chainData = await gatherChainDataHistorical(request, this.logger)
 
-      await writeHistoricErasCSV(request, chainData, this.logger)
+      const erasHistoric = await this.api.derive.staking.erasHistoric(false);
+      const eraIndexes = erasHistoric.slice(
+        Math.max(erasHistoric.length - this.historySize, 0)
+      )
+      this.logger.info(`Requested Historical data for eras: ${eraIndexes.map(era => era.toString()).join(', ')}`);
+
+      //A to big number of era indexes could make crush the API => Chunk splitting
+      const size = 10
+      const eraIndexesChucked: EraIndex[][] = []
+      for (let i = 0; i < eraIndexes.length; i += size) {
+        const chunk = eraIndexes.slice(i, i + size)
+        eraIndexesChucked.push(chunk)
+      }
+      
+      for (const chunk of eraIndexesChucked) {
+        this.logger.debug(`the handled chunk size is ${chunk.length}`)
+        const request = {api:this.api,network,exportDir:this.exportDir,eraIndexes:chunk}
+        const chainData = await gatherChainDataHistorical(request, this.logger)
+        await writeHistoricErasCSV(request, chainData, this.logger)
+      }
+
     }
 
     private _writeSessionCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> => {
