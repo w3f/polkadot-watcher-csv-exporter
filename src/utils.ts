@@ -3,6 +3,7 @@ import { Logger } from '@w3f/logger';
 import { DeriveAccountRegistration } from '@polkadot/api-derive/accounts/types';
 import { EraIndex } from '@polkadot/types/interfaces';
 import { ApiPromise } from '@polkadot/api';
+import { EraLastBlock } from './types';
 
 export const isDirEmpty = (path: string): boolean =>{
   return fs.readdirSync(path).length === 0
@@ -71,7 +72,7 @@ export const getDisplayName = (identity: DeriveAccountRegistration): string =>{
   }
 }
 
-export const firstBlockCurrentEra = async (api: ApiPromise): Promise<number> => {
+const firstBlockCurrentEra = async (api: ApiPromise): Promise<number> => {
 
   const last = await api.rpc.chain.getHeader()
   const deriveSessionProgress = await api.derive.session.progress();  
@@ -84,7 +85,7 @@ export const firstBlockCurrentEra = async (api: ApiPromise): Promise<number> => 
   return firstBlockCurrentEra.toNumber()
 }
 
-export const howManyErasAgo = async (eraIndex: EraIndex, api: ApiPromise): Promise<number> => {
+const howManyErasAgo = async (eraIndex: EraIndex, api: ApiPromise): Promise<number> => {
 
   const currentEraIndex = (await api.query.staking.activeEra()).unwrap().index;
   console.log(`current era is: ${currentEraIndex}`)
@@ -92,7 +93,7 @@ export const howManyErasAgo = async (eraIndex: EraIndex, api: ApiPromise): Promi
   
 }
 
-export const lasBlockOf = async (eraIndex: EraIndex, api: ApiPromise): Promise<number> => {
+const lastBlockOf = async (eraIndex: EraIndex, api: ApiPromise): Promise<number> => {
 
   const howManyErasAgoVar = await howManyErasAgo(eraIndex, api)
   if (howManyErasAgoVar == 0) return (await api.rpc.chain.getHeader()).number.unwrap().toNumber()
@@ -109,4 +110,14 @@ export const lasBlockOf = async (eraIndex: EraIndex, api: ApiPromise): Promise<n
   
   return firstBlockNextTargetEra.toNumber() - 1
   
+}
+
+export const erasLastBlock = async (indexes: EraIndex[], api: ApiPromise): Promise<EraLastBlock[]> => {
+
+  const result = await Promise.all(indexes.map(async index => {
+    return {era: index, block: await lastBlockOf(index,api)}
+   }))
+
+  return result
+
 }
