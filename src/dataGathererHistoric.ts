@@ -4,7 +4,7 @@ import { DeriveEraPoints } from '@polkadot/api-derive/staking/types';
 import { MyDeriveStakingAccount, ChainData, WriteCSVHistoricalRequest } from "./types";
 import { Logger } from '@w3f/logger';
 import { ApiPromise } from '@polkadot/api';
-import { getDisplayName } from './utils';
+import { getDisplayName, lasBlockOf } from './utils';
 import { DeriveEraExposure } from '@polkadot/api-derive/staking/types' 
 import BN from 'bn.js';
 
@@ -18,6 +18,9 @@ export const gatherChainDataHistorical = async (request: WriteCSVHistoricalReque
 const _gatherDataHistorical = async (request: WriteCSVHistoricalRequest, logger: Logger): Promise<ChainData[]> =>{
   logger.debug(`gathering some data from the chain...`)
   const {api,eraIndexes} = request
+
+  const tmp = await lasBlockOf(eraIndexes[0],api)
+  console.log(`the last block of the era ${eraIndexes[0]} is: ${tmp}`)
 
   logger.info(`Requested eras: ${eraIndexes.map(era => era.toString()).join(', ')}`);
   logger.debug(`Gathering data ...`);
