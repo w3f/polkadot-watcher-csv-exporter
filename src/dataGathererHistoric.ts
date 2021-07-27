@@ -61,8 +61,6 @@ const _getEraHistoricValidatorStakingInfo = async (api: ApiPromise, eraPoints: D
   const eraValidatorAddresses = Object.keys(eraExposure['validators']);
   const nominators = await api.query.staking.nominators.entriesAt(await api.rpc.chain.getBlockHash(eraLastBlock.block))
 
-  console.log(JSON.stringify(nominators[10]))
-
   return Promise.all(eraValidatorAddresses.map(async validatorAddress => {
     const validatorStaking = await api.derive.staking.account(validatorAddress);
     const { identity } = await api.derive.accounts.info(validatorAddress);
