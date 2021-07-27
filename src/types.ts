@@ -84,3 +84,8 @@ export interface ChainData {
   myValidatorStaking: MyDeriveStakingAccount[];
   myWaitingValidatorStaking?: MyDeriveStakingAccount[];
 }
+
+export interface EraLastBlock {
+  era: EraIndex; 
+  block: number;
+}
