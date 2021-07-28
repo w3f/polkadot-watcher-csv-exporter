@@ -1,5 +1,5 @@
 node_modules
-config
+config/*
 !config/*sample*
 dist/
 helmfile.d/.cache

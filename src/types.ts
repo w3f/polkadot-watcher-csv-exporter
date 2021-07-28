@@ -5,15 +5,15 @@ import { DeriveStakingAccount } from '@polkadot/api-derive/staking/types';
 
 export interface InputConfig {
     logLevel: string;
-    debug: DebugConfig;
+    debug?: DebugConfig;
     port: number;
     endpoint: string;
     exportDir: string;
     endSessionBlockDistance: number;
-    bucketUpload: BucketUploadConfig;
-    cronjob: CronJobConfig;
+    bucketUpload?: BucketUploadConfig;
+    cronjob?: CronJobConfig;
     apiChunkSize?: number;
-    historic: {
+    historic?: {
       enabled: boolean;
       historySize: number;
     };

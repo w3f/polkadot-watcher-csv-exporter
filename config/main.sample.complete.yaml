@@ -14,3 +14,6 @@ bucketUpload:
   gcpBucketName: 'my_bucket'
 cronjob:
   enabled: false  
+historic:
+  enabled: false
+  historySize: 5  

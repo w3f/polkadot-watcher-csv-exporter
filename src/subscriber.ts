@@ -43,10 +43,10 @@ export class Subscriber {
         private readonly logger: Logger) {
         this.endpoint = cfg.endpoint;
         this.exportDir = cfg.exportDir;
-        this.isDebugEnabled = cfg.debug.enabled
+        this.isDebugEnabled = cfg.debug?.enabled ? cfg.debug.enabled : false
         this.isInitialWriteForced = cfg.debug.forceInitialWrite
-        this.isBucketEnabled = cfg.bucketUpload.enabled;
-        this.isCronjobEnabled = cfg.cronjob.enabled;
+        this.isBucketEnabled = cfg.bucketUpload?.enabled ? cfg.bucketUpload.enabled : false;
+        this.isCronjobEnabled = cfg.cronjob?.enabled ? cfg.cronjob?.enabled : false;
         this.progress_delta = cfg.endSessionBlockDistance
         this.apiChunkSize = cfg.apiChunkSize ? cfg.apiChunkSize : apiChunkSize
         this.historySize = cfg.historic?.historySize ? cfg.historic.historySize : 5 //default
