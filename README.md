@@ -3,7 +3,7 @@
 # polkadot-watcher-csv-exporter
 
 ## Please Note
-All the relevant data model code is placed in [writeDataCSV](src/writeDataCSV.ts).  
+All the relevant data model code is located in the [csvWriter](src/csvWriter.ts) typescript module.  
 
 ## How to Run 
 
@@ -13,7 +13,7 @@ All the relevant data model code is placed in [writeDataCSV](src/writeDataCSV.ts
 ```bash
 git clone https://github.com/w3f/polkadot-watcher-csv-exporter.git
 cd polkadot-watcher-csv-exporter
-cp config/main.sample.yaml config/main.yaml 
+cp config/main.sample.complete.yaml config/main.yaml 
 #just the first time
 
 yarn
@@ -21,11 +21,15 @@ yarn build
 yarn start
 ```
 
-## Output
-The default configuration will create a ./data-csv folder that will be populated with the chain data 
-
 ## Features
 
 - live
 - live + cronjob
 - historic
+
+## How to configure the application
+
+Sample files of the possible configurations can be found [here](config/)
+
+### Output
+If not explicitly specified, the default configuration will create a ./data-csv folder that will be populated with the chain data 
