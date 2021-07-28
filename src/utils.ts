@@ -88,7 +88,6 @@ const firstBlockCurrentEra = async (api: ApiPromise): Promise<number> => {
 const howManyErasAgo = async (eraIndex: EraIndex, api: ApiPromise): Promise<number> => {
 
   const currentEraIndex = (await api.query.staking.activeEra()).unwrap().index;
-  console.log(`current era is: ${currentEraIndex}`)
   return currentEraIndex.toNumber() - eraIndex.toNumber()
   
 }
