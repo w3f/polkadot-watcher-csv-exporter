@@ -37,8 +37,13 @@ export interface BucketUploadConfig{
 
 export interface MyDeriveStakingAccount extends DeriveStakingAccount {
   displayName: string;
-  voters: number;
+  voters: Voter[];
   eraPoints?: number;
+}
+
+export interface Voter {
+  address: string;
+  value: Compact<Balance>;
 }
 
 export interface WriteCSVRequest{
