@@ -104,7 +104,7 @@ const _getEraHistoricValidatorStakingInfo = async (api: ApiPromise, eraPoints: D
     const validatorEraPoints = eraPoints['validators'][validatorAddress] ? eraPoints['validators'][validatorAddress] : 0;
     const exposure = eraExposure.validators[validatorAddress] ? eraExposure.validators[validatorAddress] : {total:0,own:0,others:[]}  
     
-    let voters: Voter[] = []
+    const voters: Voter[] = []
     for (const nominator of nominators) {
       if(JSON.stringify(nominator.nominations.targets).includes(validatorAddress)) voters.push({address: nominator.address, value: nominator.ledger.total })
     }

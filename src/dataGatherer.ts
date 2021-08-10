@@ -90,7 +90,7 @@ const _buildMyValidatorStaking = async (api: ApiPromise, validatorsStakings: Der
 
     const exposure = eraExposures.validators[validatorAddress.toHuman()] ? eraExposures.validators[validatorAddress.toHuman()] : {total:0,own:0,others:[]}
 
-    let voters: Voter[] = []
+    const voters: Voter[] = []
     for (const staking of nominatorsStakings) {
       if (staking.nominators.includes(validatorAddress)) {
         voters.push({address: staking.accountId.toString(), value: staking.stakingLedger.total })
