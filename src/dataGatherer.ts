@@ -66,21 +66,21 @@ const _getNominatorStaking = async (api: ApiPromise, apiChunkSize: number, logge
   return nominatorsStakings
 }
 
-const _getMyValidatorStaking = async (api: ApiPromise, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<DeriveStakingAccount[]> =>{
+const _getMyValidatorStaking = async (api: ApiPromise, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<MyDeriveStakingAccount[]> =>{
   const validatorsAddresses = await api.query.session.validators();
   logger.debug(`the validator addresses size is ${validatorsAddresses.length}`)
   const validatorsStakings = await api.derive.staking.accounts(validatorsAddresses)
   return await _buildMyValidatorStaking(api,validatorsStakings,nominatorsStakings,eraPoints,eraExposures)
 }
 
-const _getMyWaitingValidatorStaking = async (api: ApiPromise, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<DeriveStakingAccount[]> => {
+const _getMyWaitingValidatorStaking = async (api: ApiPromise, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<MyDeriveStakingAccount[]> => {
   const validatorsAddresses = await _getWaitingValidatorsAccountId(api)
   logger.debug(`the waiting validator addresses size is ${validatorsAddresses.length}`)
   const validatorsStakings = await api.derive.staking.accounts(validatorsAddresses)
   return await _buildMyValidatorStaking(api,validatorsStakings,nominatorsStakings,eraPoints,eraExposures)
 }
 
-const _buildMyValidatorStaking = async (api: ApiPromise, validatorsStakings: DeriveStakingAccount[], nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure): Promise<DeriveStakingAccount[]> =>{
+const _buildMyValidatorStaking = async (api: ApiPromise, validatorsStakings: DeriveStakingAccount[], nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure): Promise<MyDeriveStakingAccount[]> =>{
   const myValidatorStaking = Promise.all ( validatorsStakings.map( async validatorStaking => {
 
     const validatorAddress = validatorStaking.accountId
