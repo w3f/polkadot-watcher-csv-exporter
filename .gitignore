@@ -1,6 +1,5 @@
-*
-!src
-!package.json
-!tsconfig.json
-!yarn.lock
+config/*
 !config/*sample*
+node_modules
+dist
+data-csv
