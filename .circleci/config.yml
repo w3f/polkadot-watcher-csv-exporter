@@ -3,7 +3,7 @@ version: 2
 jobs:
   helmLint:
     docker:
-      - image: web3f/ci-commons:v2.4.11
+      - image: web3f/ci-commons:v2.4.16
     steps:
       - checkout
       - run:
@@ -21,7 +21,7 @@ jobs:
 
   buildImage:
     docker:
-      - image: web3f/ci-commons:v2.4.11
+      - image: web3f/ci-commons:v2.4.16
     steps:
       - checkout
       - setup_remote_docker:
@@ -33,7 +33,7 @@ jobs:
 
   publishImage:
     docker:
-      - image: web3f/ci-commons:v2.4.11
+      - image: web3f/ci-commons:v2.4.16
     steps:
       - checkout
       - setup_remote_docker:
@@ -44,7 +44,7 @@ jobs:
 
   publishChart:
     docker:
-      - image: web3f/ci-commons:v2.4.11
+      - image: web3f/ci-commons:v2.4.16
     steps:
       - checkout
       - run:
@@ -53,7 +53,7 @@ jobs:
 
   integrationTests:
     docker:
-      - image: web3f/ci-commons:v2.4.11
+      - image: web3f/ci-commons:v2.4.16
     steps:
       - checkout
       - setup_remote_docker:
@@ -61,7 +61,19 @@ jobs:
       - run:
           description: run integration tests
           command: |
-            /scripts/integration-tests.sh kindest/node:v1.19.11   
+            /scripts/integration-tests.sh kindest/node:v1.19.11  
+
+  deploy:
+    docker:
+      - image: web3f/ci-commons:v2.4.16
+    steps:
+      - checkout
+      - run:
+          environment:
+            GCP_REGION: europe-west3
+            HELM_ENV: production
+          command: |
+            /scripts/deploy.sh -c engineering           
 
 workflows:
   version: 2
@@ -107,3 +119,13 @@ workflows:
               only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
           requires:
             - integrationTests
+      - deploy:
+          context: csv-exporter
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
+          requires:
+            - publishImage
+            - publishChart      
