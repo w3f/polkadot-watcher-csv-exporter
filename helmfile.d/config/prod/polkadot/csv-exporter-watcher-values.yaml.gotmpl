@@ -1,0 +1,6 @@
+config:
+  endpoint: {{ requiredEnv "WSS_POLKADOT" }}
+  endSessionBlockDistance: 160
+  
+cronjob:
+  schedule: "21 3,7,11,15,19,23 * * *"      

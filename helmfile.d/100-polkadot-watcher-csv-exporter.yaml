@@ -1,6 +1,7 @@
 environments:
   ci:
   local:
+  production:
 
 repositories:
 - name: w3f
@@ -14,5 +15,23 @@ releases:
   chart: ../charts/polkadot-watcher-csv-exporter
   values:
   - ./config/csv-exporter-watcher-values.yaml.gotmpl
+
+{{- else }}
+
+- name: kusama-watcher-csv-exporter
+  namespace: kusama
+  chart: w3f/polkadot-watcher-csv-exporter
+  version: v0.9.7
+  values:
+  - ./config/prod/csv-exporter-watcher-values.yaml.gotmpl
+  - ./config/prod/kusama/csv-exporter-watcher-values.yaml.gotmpl
+
+- name: polkadot-watcher-csv-exporter
+  namespace: polkadot
+  chart: w3f/polkadot-watcher-csv-exporter
+  version: v0.9.7
+  values:
+  - ./config/prod/csv-exporter-watcher-values.yaml.gotmpl
+  - ./config/prod/polkadot/csv-exporter-watcher-values.yaml.gotmpl
 
 {{- end }}

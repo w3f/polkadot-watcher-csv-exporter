@@ -21,7 +21,7 @@ spec:
           restartPolicy: Never
           containers:
           - name: {{ .Release.Name }}
-            image: {{ .Values.image.repo }}:{{ .Values.image.tag }}
+            image: {{ .Values.image.repo }}:{{ .Values.image.tag | default .Chart.AppVersion }}
             imagePullPolicy: IfNotPresent
             {{ if eq .Values.config.cronjob.timeout true }}
             command: ["timeout", "1200", "yarn", "start"]
