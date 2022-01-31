@@ -21,7 +21,7 @@ releases:
 - name: kusama-watcher-csv-exporter
   namespace: kusama
   chart: w3f/polkadot-watcher-csv-exporter
-  version: v0.9.7
+  version: v0.9.8
   values:
   - ./config/prod/csv-exporter-watcher-values.yaml.gotmpl
   - ./config/prod/kusama/csv-exporter-watcher-values.yaml.gotmpl
@@ -29,7 +29,7 @@ releases:
 - name: polkadot-watcher-csv-exporter
   namespace: polkadot
   chart: w3f/polkadot-watcher-csv-exporter
-  version: v0.9.7
+  version: v0.9.8
   values:
   - ./config/prod/csv-exporter-watcher-values.yaml.gotmpl
   - ./config/prod/polkadot/csv-exporter-watcher-values.yaml.gotmpl
