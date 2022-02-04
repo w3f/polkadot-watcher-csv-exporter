@@ -16,22 +16,43 @@ releases:
   values:
   - ./config/csv-exporter-watcher-values.yaml.gotmpl
 
+- name: watcher-csv-exporter-scanner
+  chart: ../charts/polkadot-watcher-csv-exporter
+  values:
+  - ./config/csv-exporter-watcher-values.yaml.gotmpl  
+
 {{- else }}
 
 - name: kusama-watcher-csv-exporter
   namespace: kusama
   chart: w3f/polkadot-watcher-csv-exporter
-  version: v0.9.9
+  version: v0.10.0
   values:
   - ./config/prod/csv-exporter-watcher-values.yaml.gotmpl
   - ./config/prod/kusama/csv-exporter-watcher-values.yaml.gotmpl
 
+- name: kusama-watcher-csv-exporter-scanner
+  namespace: kusama
+  chart: w3f/polkadot-watcher-csv-exporter
+  version: v0.10.0
+  values:
+  - ./config/prod/csv-exporter-watcher-values.yaml.gotmpl
+  - ./config/prod/kusama/csv-exporter-watcher-scanner-values.yaml.gotmpl  
+
 - name: polkadot-watcher-csv-exporter
   namespace: polkadot
   chart: w3f/polkadot-watcher-csv-exporter
-  version: v0.9.9
+  version: v0.10.0
   values:
   - ./config/prod/csv-exporter-watcher-values.yaml.gotmpl
   - ./config/prod/polkadot/csv-exporter-watcher-values.yaml.gotmpl
+
+- name: polkadot-watcher-csv-exporter-scanner
+  namespace: polkadot
+  chart: w3f/polkadot-watcher-csv-exporter
+  version: v0.10.0
+  values:
+  - ./config/prod/csv-exporter-watcher-values.yaml.gotmpl
+  - ./config/prod/polkadot/csv-exporter-watcher-scanner-values.yaml.gotmpl  
 
 {{- end }}

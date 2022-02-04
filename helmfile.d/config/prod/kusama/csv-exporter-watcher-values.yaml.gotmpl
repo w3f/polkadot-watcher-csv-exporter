@@ -1,6 +1,8 @@
 config:
   endpoint: {{ requiredEnv "WSS_KUSAMA" }}
   endSessionBlockDistance: 100
+  cronjob:
+    enabled: true   
 
 cronjob:
   schedule: "18 * * * *"     
