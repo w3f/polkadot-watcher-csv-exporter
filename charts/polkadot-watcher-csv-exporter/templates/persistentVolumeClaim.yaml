@@ -2,7 +2,7 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-csv
+  name: {{ .Release.Name }}-data-csv
 spec:
   accessModes:
     - ReadWriteOnce
@@ -13,7 +13,7 @@ spec:
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: {{ .Release.Name }}-csv
+  name: {{ .Release.Name }}-data-scanner
 spec:
   accessModes:
     - ReadWriteOnce

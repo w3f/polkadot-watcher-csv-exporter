@@ -67,11 +67,11 @@ spec:
       {{ if ne .Values.environment "ci" }}       
       - name: data-csv
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-csv
-      {{ if ne .Values.config.eraScanner.enabled true }} 
+          claimName: {{ .Release.Name }}-data-csv
+      {{ if eq .Values.config.eraScanner.enabled true }} 
       - name: data-scanner
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-scanner
+          claimName: {{ .Release.Name }}-data-scanner
       {{ end }}     
       {{ end }}  
 {{ end }}        

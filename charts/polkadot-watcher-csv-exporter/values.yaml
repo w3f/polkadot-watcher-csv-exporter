@@ -20,14 +20,14 @@ config:
     gcpProject: ''
     gcpBucketName: '' 
   cronjob:
-    enabled: true  
+    enabled: false  
     timeout: true
   historic:
     enabled: false
     historySize: 5
   eraScanner:
     enabled: false
-    dataDir: "./data-scanner"
+    dataDir: "/app/data-scanner"
     #startFromEra: 3309 
 
 

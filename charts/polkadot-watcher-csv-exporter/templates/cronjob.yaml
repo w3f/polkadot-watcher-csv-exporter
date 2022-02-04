@@ -66,6 +66,6 @@ spec:
           {{ if ne .Values.environment "ci" }}       
           - name: data-csv
             persistentVolumeClaim:
-              claimName: {{ .Release.Name }}
+              claimName: {{ .Release.Name }}-data-csv
           {{ end }}
 {{ end }}          
