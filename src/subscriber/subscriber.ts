@@ -3,17 +3,17 @@ import { BlockNumber, Header, SessionIndex, EraIndex } from '@polkadot/types/int
 import { Compact } from '@polkadot/types/codec';
 import { Logger } from '@w3f/logger';
 import { Text } from '@polkadot/types/primitive';
-import { gatherChainData } from './dataGatherer'
+import { gatherChainData } from '../dataGatherer'
 import { DeriveSessionProgress } from '@polkadot/api-derive/session/types'
-import { BucketGCP } from './fileUploader'
-import { apiChunkSize } from './constants'
+import { BucketGCP } from '../fileUploader'
+import { apiChunkSize } from '../constants'
 
 import {
     InputConfig, BucketUploadConfig,
-} from './types';
-import { isDirEmpty, isDirExistent, makeDir } from './utils';
-import { writeEraCSV, writeHistoricErasCSV, writeSessionCSV } from './csvWriter';
-import { gatherChainDataHistorical } from './dataGathererHistoric';
+} from '../types';
+import { isDirEmpty, isDirExistent, makeDir } from '../utils';
+import { writeEraCSV, writeHistoricErasCSV, writeSessionCSV } from '../csvWriter';
+import { gatherChainDataHistorical } from '../dataGathererHistoric';
 
 export class Subscriber {
     private chain: Text;
@@ -78,18 +78,11 @@ export class Subscriber {
     }
 
     private _initAPI = async (): Promise<void> =>{
-        const provider = new WsProvider(this.endpoint);
         
-        this.api = new ApiPromise({provider})
-        if(this.api){
-          this.api.on("error", error => {
-            if( error.toString().includes("FATAL") || JSON.stringify(error).includes("FATAL") ){
-              this.logger.error("The API had a FATAL error... exiting!")
-              process.exit(1)
-            }
-          })
-        }
-        await this.api.isReadyOrError;
+        const endpoints = this.endpoint.includes("kusama") ? [this.endpoint,'wss://kusama-rpc.polkadot.io'] : [this.endpoint,'wss://rpc.polkadot.io']
+        const provider = new WsProvider(endpoints);
+        this.api = await ApiPromise.create({provider,throwOnConnect:true,throwOnUnknown:true})
+        this.api.on('error', (error) => {this.logger.warn("The API has an error"); console.log(error)})
         
         this.chain = await this.api.rpc.system.chain();
         const [nodeName, nodeVersion] = await Promise.all([

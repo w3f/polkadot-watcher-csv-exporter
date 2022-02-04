@@ -25,6 +25,11 @@ config:
   historic:
     enabled: false
     historySize: 5
+  eraScanner:
+    enabled: false
+    dataDir: "./data-scanner"
+    #startFromEra: 3309 
+
 
 secret:
   gcpServiceAccountValue: |

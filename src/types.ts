@@ -17,6 +17,11 @@ export interface InputConfig {
       enabled: boolean;
       historySize: number;
     };
+    eraScanner?: {
+      enabled: boolean;
+      dataDir: string;
+      startFromEra?: number;
+    };
 }
 
 interface DebugConfig{

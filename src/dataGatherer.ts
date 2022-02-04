@@ -5,15 +5,41 @@ import { MyDeriveStakingAccount, WriteCSVRequest, ChainData, Voter } from "./typ
 import { Logger } from '@w3f/logger';
 import { ApiPromise } from '@polkadot/api';
 import { EraRewardPoints } from '@polkadot/types/interfaces';
-import { getDisplayName } from './utils';
+import { delay, getDisplayName, getErrorMessage } from './utils';
 import BN from 'bn.js';
 
 export const gatherChainData = async (request: WriteCSVRequest, logger: Logger): Promise<ChainData> =>{
+
   logger.info(`Data gathering triggered...`)
-  const data = await _gatherData(request, logger)
+  const data = await _handleConnectionRetries(_gatherData,request,logger)
   logger.info(`Data have been gathered.`)
   return data
 }
+
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+const _handleConnectionRetries = async (f: { (request: WriteCSVRequest, logger: Logger): Promise<ChainData> }, request: WriteCSVRequest, logger: Logger): Promise<ChainData> => {
+  let attempts = 0
+  for(;;){
+    try {
+      const data = await f(request,logger)
+      return data
+    } catch (error) {
+      logger.error(`Could not process the Data gathering...`);
+      const errorMessage = getErrorMessage(error)
+      if(
+        !errorMessage.includes("Unable to decode using the supplied passphrase") && //there is no way to recover from this
+        ++attempts < 5 
+        ){
+        logger.warn(`Retrying...`)
+        await delay(5000) //wait x seconds before retrying
+      }
+      else{
+        throw error
+      }
+    }
+  }
+}
+/* eslint-enable  @typescript-eslint/no-explicit-any */
 
 const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<ChainData> =>{
   logger.debug(`gathering some data from the chain...`)
@@ -22,14 +48,17 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
   const eraExposures = await api.derive.staking.eraExposure(eraIndex)
   const totalIssuance =  await api.query.balances.totalIssuance()
   const validatorRewardsPreviousEra = (await api.query.staking.erasValidatorReward(eraIndex.sub(new BN(1)))).unwrap();
-  logger.debug(`nominators...`)
+  logger.debug(`nominators...`); console.time('get nominators');
   const nominatorStakingPromise = _getNominatorStaking(api,apiChunkSize,logger)
   const [nominatorStaking,eraPoints] = [await nominatorStakingPromise, await eraPointsPromise]
-  logger.debug(`validators...`)
+  console.timeEnd('get nominators')
+  logger.debug(`validators...`); console.time('get validators')
   const myValidatorStaking = await _getMyValidatorStaking(api,nominatorStaking,eraPoints, eraExposures, logger)
-  logger.debug(`waiting validators...`)
+  console.timeEnd('get validators')
+  logger.debug(`waiting validators...`); console.time('get waiting validators')
   const myWaitingValidatorStaking = await _getMyWaitingValidatorStaking(api,nominatorStaking,eraPoints, eraExposures, logger)
-  
+  console.timeEnd('get waiting validators')
+
   return {
     eraPoints,
     totalIssuance,
@@ -49,7 +78,7 @@ const _getNominatorStaking = async (api: ApiPromise, apiChunkSize: number, logge
 
   logger.debug(`the nominator addresses size is ${nominatorAddresses.length}`)
 
-  //A to big nominators set could make crush the API => Chunk splitting
+  //A too big nominators set could make crush the API => Chunk splitting
   const size = apiChunkSize
   const nominatorAddressesChucked = []
   for (let i = 0; i < nominatorAddresses.length; i += size) {
