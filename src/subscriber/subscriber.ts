@@ -17,6 +17,7 @@ import { gatherChainDataHistorical } from '../dataGathererHistoric';
 
 export class Subscriber {
     private chain: Text;
+    private config: InputConfig
     private api: ApiPromise;
     private apiChunkSize: number;
     private endpoint: string;
@@ -41,6 +42,7 @@ export class Subscriber {
     constructor(
         cfg: InputConfig,
         private readonly logger: Logger) {
+        this.config = cfg
         this.endpoint = cfg.endpoint;
         this.exportDir = cfg.exportDir;
         this.isDebugEnabled = cfg.debug?.enabled ? cfg.debug.enabled : false
@@ -171,7 +173,7 @@ export class Subscriber {
 
       const deriveSessionProgress = await this.api.derive.session.progress();    
 
-      if (await this._isEndEraBlock(deriveSessionProgress)) {
+      if (!this.config.sessionOnly == true && await this._isEndEraBlock(deriveSessionProgress)) {
         this.logger.info(`starting the CSV writing for the session ${deriveSessionProgress.currentIndex} and the era ${deriveSessionProgress.currentEra}`)
 
         this._lockCSVWrite()

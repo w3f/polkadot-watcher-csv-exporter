@@ -9,6 +9,7 @@ export interface InputConfig {
     port: number;
     endpoint: string;
     exportDir: string;
+    sessionOnly: boolean
     endSessionBlockDistance: number;
     bucketUpload?: BucketUploadConfig;
     cronjob?: CronJobConfig;
