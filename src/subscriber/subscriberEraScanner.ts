@@ -1,27 +1,18 @@
-import { ApiPromise, WsProvider } from '@polkadot/api';
 import { EraIndex } from '@polkadot/types/interfaces';
 import { Logger } from '@w3f/logger';
-import { Text } from '@polkadot/types/primitive';
-import { BucketGCP } from '../fileUploader'
 import { dataFileName } from '../constants'
 import readline from 'readline';
 import {
-    InputConfig, BucketUploadConfig,
+    InputConfig,
 } from '../types';
 import { closeFile, getFileNames, initReadFileStream, initWriteFileStream, isDirEmpty, isDirExistent, isNewEraEvent, makeDir } from '../utils';
 import { writeHistoricErasCSV } from '../csvWriter';
 import { gatherChainDataHistorical } from '../dataGathererHistoric';
 import { ISubscriber } from './ISubscriber';
+import { SubscriberTemplate } from './subscriberTemplate';
 
-export class SubscriberEraScanner implements ISubscriber {
+export class SubscriberEraScanner extends SubscriberTemplate implements ISubscriber {
     private config: InputConfig;
-    private chain: Text;
-    private api: ApiPromise;
-    private endpoint: string;
-
-    private exportDir: string;
-    private isBucketEnabled: boolean;
-    private bucket: BucketGCP;
 
     private eraIndex: EraIndex;
 
@@ -33,13 +24,10 @@ export class SubscriberEraScanner implements ISubscriber {
     
     constructor(
         cfg: InputConfig,
-        private readonly logger: Logger) {
+        protected readonly logger: Logger) {
+        super(cfg,logger)
         this.config=cfg
-        this.endpoint = cfg.endpoint;
-        this.exportDir = cfg.exportDir;
-        this.isBucketEnabled = cfg.bucketUpload?.enabled ? cfg.bucketUpload.enabled : false;
         this.dataDir = cfg.eraScanner?.dataDir
-        if(this.isBucketEnabled) this._initBucket(cfg.bucketUpload);
     }
 
     public start = async (): Promise<void> => {
@@ -55,37 +43,6 @@ export class SubscriberEraScanner implements ISubscriber {
         this.logger.info(`Event Scanner Based Module subscribed...`)
 
         this._requestNewScan() //first scan after a restart
-    }
-
-    private _initBucket = (config: BucketUploadConfig): void =>{
-      this.bucket = new BucketGCP(config,this.logger)
-    }
-
-    private _initAPI = async (): Promise<void> =>{
-
-        const endpoints = this.endpoint.includes("kusama") ? [this.endpoint,'wss://kusama-rpc.polkadot.io'] : [this.endpoint,'wss://rpc.polkadot.io']
-        const provider = new WsProvider(endpoints);
-        this.api = await ApiPromise.create({provider,throwOnConnect:true,throwOnUnknown:true})
-        this.api.on('error', (error) => {this.logger.warn("The API has an error"); console.log(error)})
-        
-        this.chain = await this.api.rpc.system.chain();
-        const [nodeName, nodeVersion] = await Promise.all([
-            this.api.rpc.system.name(),
-            this.api.rpc.system.version()
-        ]);
-        this.logger.info(
-            `You are connected to chain ${this.chain} using ${nodeName} v${nodeVersion}`
-        );
-    }
-
-    private _initExportDir = (): void =>{
-      if ( ! isDirExistent(this.exportDir) ) {
-        makeDir(this.exportDir)
-      }
-
-      if( ! isDirEmpty(this.exportDir)){
-        this._uploadToBucket()
-      }
     }
 
     private _initDataDir = async (): Promise<void> =>{
@@ -164,10 +121,6 @@ export class SubscriberEraScanner implements ISubscriber {
       const request = {api:this.api,network,exportDir:this.exportDir,eraIndexes:[eraIndex]}
       const chainData = await gatherChainDataHistorical(request, this.logger)
       await writeHistoricErasCSV(request, chainData, this.logger)
-    }
-
-    private _uploadToBucket = async (): Promise<void> =>{
-      this.isBucketEnabled && await this.bucket.uploadCSVFiles(this.exportDir)
     }
 
     private _handleEraChange = async (newEra: EraIndex): Promise<void> =>{

@@ -68,4 +68,21 @@ spec:
             persistentVolumeClaim:
               claimName: {{ .Release.Name }}-data-csv
           {{ end }}
+
+---
+
+{{ if ne .Values.environment "ci" }}  
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-data-csv
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 256Mi
+{{ end }}      
+
+
 {{ end }}          
