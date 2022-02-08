@@ -73,10 +73,11 @@ interface MyNominator {
 const _getNominatorStaking = async (api: ApiPromise, eraLastBlock: EraLastBlock, logger: Logger): Promise<MyNominator[]> =>{
 
   const lastBlockHash = await api.rpc.chain.getBlockHash(eraLastBlock.block)
+  const apiAt = await api.at(lastBlockHash)
   logger.debug(`getting the nominator entries...`)
-  const nominators = await api.query.staking.nominators.entriesAt(lastBlockHash)
-  const stakingLedgers = await api.query.staking.ledger.entriesAt(lastBlockHash)
+  const nominators = await apiAt.query.staking.nominators.entries() //this call requires a node connection with an high --ws-max-out-buffer-capacity 
   logger.debug(`got ${nominators.length} nominator entries !!`)
+  const stakingLedgers = await apiAt.query.staking.ledger.entries() //this call requires a node connection with an high --ws-max-out-buffer-capacity
   logger.debug(`got ${stakingLedgers.length} ledger entries !!`)
 
   const nominatorsMap = new Map<string,PalletStakingNominations[]>();
