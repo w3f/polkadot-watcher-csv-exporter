@@ -174,7 +174,7 @@ const _getEraHistoricValidatorStakingInfo = async (api: ApiPromise, eraPoints: D
     const validatorEraPoints = api.createType('RewardPoint', eraPoints.validators[address]);
     const exposure: PalletStakingExposure = api.createType('PalletStakingExposure', eraExposure.validators[address]);
 
-    let displayName: string = ""
+    let displayName = ""
     if(infoMap.has(address)){
       const {identity} = infoMap.get(address)
       displayName = getDisplayName(identity)

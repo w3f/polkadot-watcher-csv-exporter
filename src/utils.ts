@@ -80,7 +80,8 @@ const firstBlockCurrentEra = async (api: ApiPromise): Promise<number> => {
   const guessedFirstBlockCurrentEra = last.number.unwrap().toNumber() - deriveSessionProgress.eraProgress.toNumber() + 50 
 
   const hash = await api.rpc.chain.getBlockHash(guessedFirstBlockCurrentEra)
-  const [_,firstBlockCurrentEra] = await api.query.babe.epochStart.at(hash)
+  const apiAt = await api.at(hash)
+  const [_,firstBlockCurrentEra] = await apiAt.query.babe.epochStart()
 
   return firstBlockCurrentEra.toNumber()
 }
@@ -105,7 +106,8 @@ const lastBlockOf = async (eraIndex: EraIndex, api: ApiPromise): Promise<number>
   const guessedResult = lastBlockPreviousEra - ( ( howManyErasAgoVar - 1 ) * deriveSessionProgress.eraLength.toNumber() )
 
   const hash = await api.rpc.chain.getBlockHash(guessedResult + 50)
-  const [_,firstBlockNextTargetEra] = await api.query.babe.epochStart.at(hash)
+  const apiAt = await api.at(hash)
+  const [_,firstBlockNextTargetEra] = await apiAt.query.babe.epochStart()
   
   return firstBlockNextTargetEra.toNumber() - 1
   
