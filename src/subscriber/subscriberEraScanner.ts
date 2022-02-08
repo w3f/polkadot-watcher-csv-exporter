@@ -94,7 +94,7 @@ export class SubscriberEraScanner implements ISubscriber {
       }
 
       if( isDirEmpty(this.dataDir) || !getFileNames(this.dataDir,this.logger).includes(this.dataFileName) || ! await this._getLastCheckedEra()){
-        const firstEraToScan = this.config.eraScanner?.startFromEra ? this.config.eraScanner?.startFromEra : this.eraIndex.toNumber()-1 // from config or current era -1
+        const firstEraToScan = this.config.eraScanner?.startFromEra ? this.config.eraScanner?.startFromEra : this.eraIndex.toNumber()-2 // from config or current era -2
         const file = initWriteFileStream(this.dataDir,this.dataFileName,this.logger)
         file.write(`${firstEraToScan}`)
         await closeFile(file)
@@ -103,6 +103,7 @@ export class SubscriberEraScanner implements ISubscriber {
 
     private _initInstanceVariables = async (): Promise<void> =>{
       this.eraIndex = (await this.api.query.staking.activeEra()).unwrap().index;
+      this.logger.info(`Current Era: ${this.eraIndex}`)
     }
 
     private _handleEventsSubscriptions = async (): Promise<void> => {
