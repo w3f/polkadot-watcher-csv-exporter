@@ -11,48 +11,48 @@ releases:
 
 {{- if or (eq .Environment.Name "ci") (eq .Environment.Name "local") }} 
 
-- name: watcher-csv-exporter
+- name: session-exporter
   chart: ../charts/polkadot-watcher-csv-exporter
   values:
-  - ./config/csv-exporter-watcher-values.yaml.gotmpl
+  - ./config/session-exporter-values.yaml.gotmpl
 
-- name: watcher-csv-exporter-scanner
+- name: era-scanner
   chart: ../charts/polkadot-watcher-csv-exporter
   values:
-  - ./config/csv-exporter-watcher-values.yaml.gotmpl  
+  - ./config/era-scanner-values.yaml.gotmpl  
 
 {{- else }}
 
-- name: kusama-watcher-csv-exporter
-  namespace: kusama
+- name: kusama-session-exporter
+  namespace: csv-exporter
   chart: w3f/polkadot-watcher-csv-exporter
   version: v0.10.0
   values:
-  - ./config/prod/csv-exporter-watcher-values.yaml.gotmpl
-  - ./config/prod/kusama/csv-exporter-watcher-values.yaml.gotmpl
+  - ./config/prod/csv-exporter-values.yaml.gotmpl
+  - ./config/prod/kusama/session-exporter-values.yaml.gotmpl
 
-- name: kusama-watcher-csv-exporter-scanner
-  namespace: kusama
+- name: kusama-era-scanner
+  namespace: csv-exporter
   chart: w3f/polkadot-watcher-csv-exporter
   version: v0.10.0
   values:
-  - ./config/prod/csv-exporter-watcher-values.yaml.gotmpl
-  - ./config/prod/kusama/csv-exporter-watcher-scanner-values.yaml.gotmpl  
+  - ./config/prod/csv-exporter-values.yaml.gotmpl
+  - ./config/prod/era/kusama/era-scanner-values.yaml.gotmpl  
 
-- name: polkadot-watcher-csv-exporter
-  namespace: polkadot
+- name: polkadot-session-exporter
+  namespace: csv-exporter
   chart: w3f/polkadot-watcher-csv-exporter
   version: v0.10.0
   values:
-  - ./config/prod/csv-exporter-watcher-values.yaml.gotmpl
-  - ./config/prod/polkadot/csv-exporter-watcher-values.yaml.gotmpl
+  - ./config/prod/csv-exporter-values.yaml.gotmpl
+  - ./config/prod/polkadot/session-exporter-values.yaml.gotmpl
 
-- name: polkadot-watcher-csv-exporter-scanner
-  namespace: polkadot
+- name: polkadot-era-scanner
+  namespace: csv-exporter
   chart: w3f/polkadot-watcher-csv-exporter
   version: v0.10.0
   values:
-  - ./config/prod/csv-exporter-watcher-values.yaml.gotmpl
-  - ./config/prod/polkadot/csv-exporter-watcher-scanner-values.yaml.gotmpl  
+  - ./config/prod/csv-exporter-values.yaml.gotmpl
+  - ./config/prod/polkadot/era-scanner-values.yaml.gotmpl  
 
 {{- end }}
