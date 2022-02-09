@@ -61,19 +61,7 @@ jobs:
       - run:
           description: run integration tests
           command: |
-            /scripts/integration-tests.sh kindest/node:v1.21.1  
-
-  deploy:
-    docker:
-      - image: web3f/ci-commons:v2.4.16
-    steps:
-      - checkout
-      - run:
-          environment:
-            GCP_REGION: europe-west3
-            HELM_ENV: production
-          command: |
-            /scripts/deploy.sh -c engineering           
+            /scripts/integration-tests.sh kindest/node:v1.21.1           
 
 workflows:
   version: 2
@@ -118,14 +106,4 @@ workflows:
             tags:
               only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
           requires:
-            - integrationTests
-      - deploy:
-          context: csv-exporter
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
-          requires:
-            - publishImage
-            - publishChart      
+            - integrationTests  

@@ -1,7 +1,6 @@
 environments:
   ci:
   local:
-  production:
 
 repositories:
 - name: w3f
@@ -20,39 +19,5 @@ releases:
   chart: ../charts/polkadot-watcher-csv-exporter
   values:
   - ./config/era-scanner-values.yaml.gotmpl  
-
-{{- else }}
-
-- name: kusama-session-exporter
-  namespace: csv-exporter
-  chart: w3f/polkadot-watcher-csv-exporter
-  version: v0.10.0
-  values:
-  - ./config/prod/csv-exporter-values.yaml.gotmpl
-  - ./config/prod/kusama/session-exporter-values.yaml.gotmpl
-
-- name: kusama-era-scanner
-  namespace: csv-exporter
-  chart: w3f/polkadot-watcher-csv-exporter
-  version: v0.10.0
-  values:
-  - ./config/prod/csv-exporter-values.yaml.gotmpl
-  - ./config/prod/era/kusama/era-scanner-values.yaml.gotmpl  
-
-- name: polkadot-session-exporter
-  namespace: csv-exporter
-  chart: w3f/polkadot-watcher-csv-exporter
-  version: v0.10.0
-  values:
-  - ./config/prod/csv-exporter-values.yaml.gotmpl
-  - ./config/prod/polkadot/session-exporter-values.yaml.gotmpl
-
-- name: polkadot-era-scanner
-  namespace: csv-exporter
-  chart: w3f/polkadot-watcher-csv-exporter
-  version: v0.10.0
-  values:
-  - ./config/prod/csv-exporter-values.yaml.gotmpl
-  - ./config/prod/polkadot/era-scanner-values.yaml.gotmpl  
 
 {{- end }}
