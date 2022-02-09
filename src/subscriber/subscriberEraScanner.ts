@@ -95,7 +95,7 @@ export class SubscriberEraScanner extends SubscriberTemplate implements ISubscri
             */
           } while (this.isNewScanRequired);
         } catch (error) {
-          this.logger.error(`last SCAN had an issue at era ${await this._getLastCheckedEra()}!: ${error}`)
+          this.logger.error(`the SCAN had an issue ! last checked era: ${await this._getLastCheckedEra()}: ${error}`)
           this.logger.warn('quitting...')
           process.exit(-1);
         } finally {
