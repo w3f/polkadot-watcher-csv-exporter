@@ -7,11 +7,13 @@ source /scripts/bootstrap-helm.sh
 run_tests() {
     echo Running tests...
 
-    wait_pod_ready watcher-csv-exporter
+    wait_pod_ready session-exporter 
+    wait_pod_ready era-scanner
 }
 
 teardown() {
-    helm delete watcher-csv-exporter
+    helm delete session-exporter
+    helm delete era-scanner
 }
 
 main(){

@@ -2,13 +2,13 @@ import express from 'express';
 import { createLogger, Logger } from '@w3f/logger';
 import { Config } from '@w3f/config';
 
-import { Subscriber } from '../subscriber';
 import { InputConfig } from '../types';
+import { SubscriberFactory } from '../subscriber/SubscriberFactory';
 
 const _createLogger = (cfg: InputConfig): Logger => {
 
   let logLevel = cfg.logLevel
-  if(cfg.debug.enabled) logLevel = 'debug'
+  if(cfg.debug?.enabled) logLevel = 'debug'
 
   return createLogger(logLevel);
 }
@@ -24,6 +24,12 @@ export const startAction = async (cmd): Promise<void> =>{
     server.listen(cfg.port);
 
     const logger = _createLogger(cfg);
-    const subscriber = new Subscriber(cfg,logger);
-    await subscriber.start();
+    const subscriber = new SubscriberFactory(cfg,logger).makeSubscriber()
+    
+    try {
+        await subscriber.start();
+    } catch (e) {
+        logger.error(`During subscriber run: ${JSON.stringify(e)}`);
+        process.exit(-1);
+    }
 }

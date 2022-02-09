@@ -36,7 +36,7 @@ const _writeValidatorSessionCSV = async (request: WriteValidatorCSVRequest, logg
 const _writeValidatorHistoricEraCSV = async (request: WriteValidatorHistoricCSVRequest, logger: Logger): Promise<void> => {
   const { network, exportDir, erasData } = request
 
-  erasData.forEach(async eraData => {
+  for (const eraData of erasData) {
     logger.info(`Writing validators CSV for era ${eraData.eraIndex}`)
 
     const fileName = `${network}_validators_era_${eraData.eraIndex}.csv`
@@ -60,8 +60,7 @@ const _writeValidatorHistoricEraCSV = async (request: WriteValidatorHistoricCSVR
     await closeFile(file)
 
     logger.info(`Finished writing validators CSV for era ${eraData.eraIndex}`)
-
-  })
+  }
 }
 
 const _writeValidatorEraCSV = async (request: WriteValidatorCSVRequest, logger: Logger): Promise<void> => {

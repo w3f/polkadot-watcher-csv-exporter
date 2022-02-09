@@ -1,0 +1,16 @@
+environment: {{ .Environment.Name }}
+
+{{ if eq .Environment.Name "ci" }}
+image:
+  tag: {{ env "CIRCLE_SHA1" | default "kind" }}
+{{ else if eq .Environment.Name "local" }}
+image:
+  repo: localhost:5000/polkadot-watcher-csv-exporter
+  tag: latest
+{{ end }}
+
+config:
+  debug:
+    enabled: true
+  eraScanner:
+    enabled: true  

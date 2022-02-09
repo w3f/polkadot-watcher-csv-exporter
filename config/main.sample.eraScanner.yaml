@@ -1,0 +1,8 @@
+endpoint: "wss://kusama-rpc.polkadot.io/"
+port: 3000
+logLevel: info
+exportDir: "./data-csv"
+eraScanner:
+  enabled: true
+  dataDir: "./data-scanner"
+  #startFromEra: 3309    

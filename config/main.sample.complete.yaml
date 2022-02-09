@@ -7,6 +7,7 @@ debug:
 exportDir: "./data-csv"
 endSessionBlockDistance: 20
 apiChunkSize: 3000
+sessionOnly: false
 bucketUpload:
   enabled: false
   gcpServiceAccount: '~/Documents/serviceAccount.json'
@@ -16,4 +17,8 @@ cronjob:
   enabled: false  
 historic:
   enabled: false
-  historySize: 5  
+  historySize: 5 
+eraScanner:
+  enabled: false
+  dataDir: "./data-scanner"
+  #startFromEra: 3309      

@@ -1,32 +1,27 @@
-import { ApiPromise, WsProvider } from '@polkadot/api';
 import { BlockNumber, Header, SessionIndex, EraIndex } from '@polkadot/types/interfaces';
 import { Compact } from '@polkadot/types/codec';
 import { Logger } from '@w3f/logger';
-import { Text } from '@polkadot/types/primitive';
-import { gatherChainData } from './dataGatherer'
+import { gatherChainData } from '../dataGatherer'
 import { DeriveSessionProgress } from '@polkadot/api-derive/session/types'
-import { BucketGCP } from './fileUploader'
-import { apiChunkSize } from './constants'
+import { apiChunkSize } from '../constants'
 
 import {
-    InputConfig, BucketUploadConfig,
-} from './types';
-import { isDirEmpty, isDirExistent, makeDir } from './utils';
-import { writeEraCSV, writeHistoricErasCSV, writeSessionCSV } from './csvWriter';
-import { gatherChainDataHistorical } from './dataGathererHistoric';
+    InputConfig,
+} from '../types';
+import { writeEraCSV, writeHistoricErasCSV, writeSessionCSV } from '../csvWriter';
+import { gatherChainDataHistorical } from '../dataGathererHistoric';
+import { SubscriberTemplate } from './subscriberTemplate';
+import { ISubscriber } from './ISubscriber';
 
-export class Subscriber {
-    private chain: Text;
-    private api: ApiPromise;
+export class Subscriber extends SubscriberTemplate implements ISubscriber {
+
+    private config: InputConfig
+
     private apiChunkSize: number;
-    private endpoint: string;
 
-    private exportDir: string;
     private isInitialWriteForced: boolean;
     private isDebugEnabled: boolean;
     private isCronjobEnabled: boolean;
-    private isBucketEnabled: boolean;
-    private bucket: BucketGCP;
 
     private sessionIndex: SessionIndex;
     private eraIndex: EraIndex;
@@ -40,7 +35,9 @@ export class Subscriber {
     
     constructor(
         cfg: InputConfig,
-        private readonly logger: Logger) {
+        protected readonly logger: Logger) {
+        super(cfg,logger)  
+        this.config = cfg
         this.endpoint = cfg.endpoint;
         this.exportDir = cfg.exportDir;
         this.isDebugEnabled = cfg.debug?.enabled ? cfg.debug.enabled : false
@@ -56,13 +53,7 @@ export class Subscriber {
 
     public start = async (): Promise<void> => {
         
-        try {
-          await this._initAPI();
-        } catch (error) {
-          this.logger.error("initAPI error... exiting: "+JSON.stringify(error))
-          process.exit(1)
-        }
-
+        await this._initAPI();
         await this._initInstanceVariables();
         this._initExportDir();
 
@@ -71,44 +62,6 @@ export class Subscriber {
         this.isHistoricEnabled && await this._triggerHistoricActions()
 
         await this._handleNewHeadSubscriptions();
-    }
-
-    private _initBucket = (config: BucketUploadConfig): void =>{
-      this.bucket = new BucketGCP(config,this.logger)
-    }
-
-    private _initAPI = async (): Promise<void> =>{
-        const provider = new WsProvider(this.endpoint);
-        
-        this.api = new ApiPromise({provider})
-        if(this.api){
-          this.api.on("error", error => {
-            if( error.toString().includes("FATAL") || JSON.stringify(error).includes("FATAL") ){
-              this.logger.error("The API had a FATAL error... exiting!")
-              process.exit(1)
-            }
-          })
-        }
-        await this.api.isReadyOrError;
-        
-        this.chain = await this.api.rpc.system.chain();
-        const [nodeName, nodeVersion] = await Promise.all([
-            this.api.rpc.system.name(),
-            this.api.rpc.system.version()
-        ]);
-        this.logger.info(
-            `You are connected to chain ${this.chain} using ${nodeName} v${nodeVersion}`
-        );
-    }
-
-    private _initExportDir = (): void =>{
-      if ( ! isDirExistent(this.exportDir) ) {
-        makeDir(this.exportDir)
-      }
-
-      if( ! isDirEmpty(this.exportDir)){
-        this._uploadToBucket()
-      }
     }
 
     private _initInstanceVariables = async (): Promise<void> =>{
@@ -158,10 +111,6 @@ export class Subscriber {
       this.isHistoricEnabled && await this._handleHistoricJob()
     }
 
-    private _uploadToBucket = async (): Promise<void> =>{
-      this.isBucketEnabled && await this.bucket.uploadCSVFiles(this.exportDir)
-    }
-
     private  _handleCronJob = async(): Promise<void> =>{
       this.logger.info(`cronjob successfully ending...`)
       process.exit()
@@ -172,13 +121,12 @@ export class Subscriber {
       process.exit()
     }
 
-    
     private  _writeCSVHandler = async (header: Header): Promise<void> =>{
       if(this._isCSVWriteLocked()) return
 
       const deriveSessionProgress = await this.api.derive.session.progress();    
 
-      if (await this._isEndEraBlock(deriveSessionProgress)) {
+      if (!this.config.sessionOnly == true && await this._isEndEraBlock(deriveSessionProgress)) {
         this.logger.info(`starting the CSV writing for the session ${deriveSessionProgress.currentIndex} and the era ${deriveSessionProgress.currentEra}`)
 
         this._lockCSVWrite()

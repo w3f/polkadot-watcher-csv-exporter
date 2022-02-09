@@ -1,6 +1,8 @@
 {{ if ne .Values.config.cronjob.enabled true }}
+
+
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ .Release.Name }}
   labels:
@@ -8,17 +10,18 @@ metadata:
 spec:
   replicas: 1
   revisionHistoryLimit: 3
-  strategy:
+  updateStrategy:
     type: RollingUpdate
   selector:
     matchLabels:
       app: {{ .Release.Name }}
+  serviceName: {{ .Release.Name }}
   template:
     metadata:
       labels:
         app: {{ .Release.Name }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}  
     spec:
       containers:
       - name: {{ .Release.Name }}
@@ -29,7 +32,7 @@ spec:
         - /app/config/main.yaml
         ports:
         - name: metrics
-          containerPort: {{ .Values.config.port }}       
+          containerPort: {{ .Values.config.port }}
         livenessProbe:
           httpGet:
             path: /healthcheck
@@ -39,7 +42,7 @@ spec:
         {{ if ne .Values.environment "ci" }}
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
-        {{ end }}
+        {{ end }}  
         volumeMounts:
         - name: config
           mountPath: /app/config 
@@ -49,20 +52,47 @@ spec:
         {{ if ne .Values.environment "ci" }}    
         - name: data-csv
           mountPath: {{ .Values.config.exportDir }}
+        {{ if eq .Values.config.eraScanner.enabled true }} 
+        - name: data-scanner
+          mountPath: {{ .Values.config.eraScanner.dataDir }}
         {{ end }}  
+        {{ end }}          
       volumes:
       - name: config
         configMap:
-          name: {{ .Release.Name }} 
+          name: {{ .Release.Name }}  
       - name: service-account
         secret:
           secretName: {{ .Release.Name }}
           items:
           - key: service_account_json
-            path: {{ base .Values.config.bucketUpload.gcpServiceAccount }}
-      {{ if ne .Values.environment "ci" }}       
+            path: {{ base .Values.config.bucketUpload.gcpServiceAccount }}    
+      {{ if ne .Values.environment "production" }}
       - name: data-csv
-        persistentVolumeClaim:
-          claimName: {{ .Release.Name }}
-      {{ end }}  
+        emptyDir: {}
+        {{ if eq .Values.config.eraScanner.enabled true }}   
+      - name: data-scanner
+        emptyDir: {}  
+        {{ end }}   
+      {{ else }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data-csv
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+  {{ if eq .Values.config.eraScanner.enabled true }}           
+  - metadata:
+      name: data-scanner
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
+  {{ end }}                
+      {{ end }}
+
+
 {{ end }}        

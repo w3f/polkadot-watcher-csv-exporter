@@ -14,17 +14,23 @@ config:
   exportDir: "/app/data-csv"
   endSessionBlockDistance: 20
   apiChunkSize: 3000
+  sessionOnly: false
   bucketUpload:
     enabled: false
     gcpServiceAccount: '/app/service-account/credentials.json'
     gcpProject: ''
     gcpBucketName: '' 
   cronjob:
-    enabled: true  
+    enabled: false  
     timeout: true
   historic:
     enabled: false
     historySize: 5
+  eraScanner:
+    enabled: false
+    dataDir: "/app/data-scanner"
+    #startFromEra: 3309 
+
 
 secret:
   gcpServiceAccountValue: |

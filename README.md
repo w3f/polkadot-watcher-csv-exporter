@@ -26,6 +26,7 @@ yarn start
 - live
 - live + cronjob
 - historic
+- scanner (historic)
 
 ## How to configure the application
 
