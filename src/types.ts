@@ -90,6 +90,8 @@ export interface WriteValidatorHistoricCSVRequest extends WriteCSVHistoricalRequ
 
 export interface ChainData {
   eraIndex?: EraIndex;
+  sessionIndex?: SessionIndex;
+  blockNumber?: Compact<BlockNumber>;
   eraPoints: EraRewardPoints;
   totalIssuance: Balance;
   validatorRewardsPreviousEra: BalanceOf;
