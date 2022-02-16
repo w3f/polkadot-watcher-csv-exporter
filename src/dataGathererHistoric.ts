@@ -39,8 +39,13 @@ const _gatherDataHistorical = async (request: WriteCSVHistoricalRequest, logger:
 
   const chainDataEras = Promise.all( eraIndexes.map( async index => {
 
+    const eraBlockReference = erasLastBlock.find(({ era }) => era.eq(index))
+    const hashReference = await api.rpc.chain.getBlockHash(eraBlockReference.block)
+    const apiAt = await api.at(hashReference)
+    const sessionIndex = await apiAt.query.session.currentIndex()
+
     logger.debug(`nominators...`)
-    const nominators = await _getNominatorStaking(api,erasLastBlock.find(({ era }) => era.eq(index)),logger)
+    const nominators = await _getNominatorStaking(api,eraBlockReference,logger)
     logger.debug(`got nominators...`)
     logger.debug(`valdiators...`)
     const myValidatorStaking = await _getEraHistoricValidatorStakingInfo(
@@ -53,6 +58,8 @@ const _gatherDataHistorical = async (request: WriteCSVHistoricalRequest, logger:
     
     return {
       eraIndex: index,
+      sessionIndex: api.createType('SessionIndex',sessionIndex),
+      blockNumber: api.createType('Compact<Balance>', eraBlockReference.block),
       eraPoints: await api.query.staking.erasRewardPoints(index),
       totalIssuance: erasRewards.find(({ era }) => era.eq(index)).eraReward,
       validatorRewardsPreviousEra: (await api.query.staking.erasValidatorReward(index.sub(new BN(1)))).unwrap(),
