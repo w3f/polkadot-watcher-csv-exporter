@@ -27,12 +27,10 @@ const _gatherDataHistorical = async (request: WriteCSVHistoricalRequest, logger:
 
   const [
     erasPoints,
-    erasRewards,
     erasExposures,
     erasLastBlock
   ] = await Promise.all([
     api.derive.staking._erasPoints(eraIndexes,false),
-    api.derive.staking._erasRewards(eraIndexes,false),
     api.derive.staking._erasExposure(eraIndexes,false),
     erasLastBlockFunction(eraIndexes,api)
   ]);
@@ -61,7 +59,7 @@ const _gatherDataHistorical = async (request: WriteCSVHistoricalRequest, logger:
       sessionIndex: api.createType('SessionIndex',sessionIndex),
       blockNumber: api.createType('Compact<Balance>', eraBlockReference.block),
       eraPoints: await api.query.staking.erasRewardPoints(index),
-      totalIssuance: erasRewards.find(({ era }) => era.eq(index)).eraReward,
+      totalIssuance: await apiAt.query.balances.totalIssuance(),
       validatorRewardsPreviousEra: (await api.query.staking.erasValidatorReward(index.sub(new BN(1)))).unwrap(),
       nominatorStaking: null,
       myValidatorStaking: myValidatorStaking
