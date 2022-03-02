@@ -34,7 +34,7 @@ const _handleConnectionRetries = async (f: { (request: WriteCSVRequest, logger: 
         await delay(5000) //wait x seconds before retrying
       }
       else{
-        throw error
+        process.exit(-1);
       }
     }
   }
