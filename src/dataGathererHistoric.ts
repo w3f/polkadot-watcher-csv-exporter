@@ -59,7 +59,7 @@ const _gatherDataHistorical = async (request: WriteCSVHistoricalRequest, logger:
       sessionIndex: api.createType('SessionIndex',sessionIndex),
       blockNumber: api.createType('Compact<Balance>', eraBlockReference.block),
       eraPoints: await api.query.staking.erasRewardPoints(index),
-      totalIssuance: await apiAt.query.balances.totalIssuance(), //erasRewards.find(({ era }) => era.eq(index)).eraReward
+      totalIssuance: await apiAt.query.balances.totalIssuance(),
       validatorRewardsPreviousEra: (await api.query.staking.erasValidatorReward(index.sub(new BN(1)))).unwrap(),
       nominatorStaking: null,
       myValidatorStaking: myValidatorStaking
