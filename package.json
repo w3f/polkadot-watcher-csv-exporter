@@ -1,6 +1,6 @@
 {
   "name": "polkadot-watcher-csv-exporter",
-  "version": "0.10.5",
+  "version": "0.10.6",
   "description": "Monitor events on Polkadot networks and export a csv dataset",
   "repository": "git@github.com:w3f/polkadot-watcher-csv-exporter.git",
   "author": "W3F Infrastructure Team <devops@web3.foundation>",
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^5.18.1",
-    "@polkadot/api": "^7.10.1",
+    "@polkadot/api": "^7.11.1",
     "@w3f/config": "^0.1.1",
     "@w3f/logger": "^0.4.2",
     "commander": "^4.0.0",
