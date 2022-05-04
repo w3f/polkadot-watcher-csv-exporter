@@ -19,6 +19,14 @@ spec:
           annotations:
             checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         spec:
+          {{- if .Values.cronjob.affinity }}
+          affinity:
+{{ toYaml .Values.cronjob.affinity | indent 12 }}      
+          {{- end }}          
+          {{- if .Values.cronjob.tolerations }}          
+          tolerations:
+{{ toYaml .Values.cronjob.tolerations | indent 12 }}
+          {{- end }} 
           restartPolicy: Never
           containers:
           - name: {{ .Release.Name }}

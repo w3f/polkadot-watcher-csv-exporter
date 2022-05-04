@@ -13,7 +13,7 @@ config:
     forceInitialWrite: false
   exportDir: "/app/data-csv"
   endSessionBlockDistance: 20
-  apiChunkSize: 3000
+  apiChunkSize: 2000
   sessionOnly: false
   bucketUpload:
     enabled: false
@@ -38,6 +38,8 @@ secret:
 
 cronjob:
   schedule: "* * * * *"    
+  tolerations: []
+  affinity: {}
     
 resources: 
   requests:
