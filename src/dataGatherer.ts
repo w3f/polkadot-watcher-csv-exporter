@@ -53,10 +53,10 @@ const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<Ch
   const [nominatorStaking,eraPoints] = [await nominatorStakingPromise, await eraPointsPromise]
   console.timeEnd('get nominators')
   logger.debug(`validators...`); console.time('get validators')
-  const myValidatorStaking = await _getMyValidatorStaking(api,nominatorStaking,eraPoints, eraExposures, logger)
+  const myValidatorStaking = await _getMyValidatorStaking(api,apiChunkSize,nominatorStaking,eraPoints, eraExposures, logger)
   console.timeEnd('get validators')
   logger.debug(`waiting validators...`); console.time('get waiting validators')
-  const myWaitingValidatorStaking = await _getMyWaitingValidatorStaking(api,nominatorStaking,eraPoints, eraExposures, logger)
+  const myWaitingValidatorStaking = await _getMyWaitingValidatorStaking(api,apiChunkSize,nominatorStaking,eraPoints, eraExposures, logger)
   console.timeEnd('get waiting validators')
 
   return {
@@ -95,17 +95,45 @@ const _getNominatorStaking = async (api: ApiPromise, apiChunkSize: number, logge
   return nominatorsStakings
 }
 
-const _getMyValidatorStaking = async (api: ApiPromise, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<MyDeriveStakingAccount[]> =>{
+const _getMyValidatorStaking = async (api: ApiPromise, apiChunkSize: number, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<MyDeriveStakingAccount[]> =>{
   const validatorsAddresses = await api.query.session.validators();
   logger.debug(`the validator addresses size is ${validatorsAddresses.length}`)
-  const validatorsStakings = await api.derive.staking.accounts(validatorsAddresses)
+
+  //A too big nominators set could make crush the API => Chunk splitting
+  const size = apiChunkSize
+  const validatorsAddressesChucked = []
+  for (let i = 0; i < validatorsAddresses.length; i += size) {
+    const chunk = validatorsAddresses.slice(i, i + size)
+    validatorsAddressesChucked.push(chunk)
+  } 
+
+  const validatorsStakings: DeriveStakingAccount[] = []
+  for (const chunk of validatorsAddressesChucked) {
+    logger.debug(`the handled chunk size is ${chunk.length}`)
+    validatorsStakings.push(...await api.derive.staking.accounts(chunk))
+  }
+
   return await _buildMyValidatorStaking(api,validatorsStakings,nominatorsStakings,eraPoints,eraExposures)
 }
 
-const _getMyWaitingValidatorStaking = async (api: ApiPromise, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<MyDeriveStakingAccount[]> => {
+const _getMyWaitingValidatorStaking = async (api: ApiPromise, apiChunkSize: number, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<MyDeriveStakingAccount[]> => {
   const validatorsAddresses = await _getWaitingValidatorsAccountId(api)
   logger.debug(`the waiting validator addresses size is ${validatorsAddresses.length}`)
-  const validatorsStakings = await api.derive.staking.accounts(validatorsAddresses)
+
+  //A too big nominators set could make crush the API => Chunk splitting
+  const size = apiChunkSize
+  const validatorsAddressesChucked = []
+  for (let i = 0; i < validatorsAddresses.length; i += size) {
+    const chunk = validatorsAddresses.slice(i, i + size)
+    validatorsAddressesChucked.push(chunk)
+  } 
+
+  const validatorsStakings: DeriveStakingAccount[] = []
+  for (const chunk of validatorsAddressesChucked) {
+    logger.debug(`the handled chunk size is ${chunk.length}`)
+    validatorsStakings.push(...await api.derive.staking.accounts(chunk))
+  }
+
   return await _buildMyValidatorStaking(api,validatorsStakings,nominatorsStakings,eraPoints,eraExposures)
 }
 

@@ -14,6 +14,7 @@ config:
   exportDir: "/app/data-csv"
   endSessionBlockDistance: 20
   apiChunkSize: 2000
+  apiTimeoutMs: 180000
   sessionOnly: false
   bucketUpload:
     enabled: false

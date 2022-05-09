@@ -15,6 +15,7 @@ export interface InputConfig {
     bucketUpload?: BucketUploadConfig;
     cronjob?: CronJobConfig;
     apiChunkSize?: number;
+    apiTimeoutMs?: number;
     historic?: {
       enabled: boolean;
       historySize: number;
