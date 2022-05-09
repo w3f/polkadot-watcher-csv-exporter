@@ -6,10 +6,12 @@ import {
     InputConfig, BucketUploadConfig,
 } from '../types';
 import { isDirEmpty, isDirExistent, makeDir } from '../utils';
+import { apiTimeoutMs } from '../constants';
 
 export abstract class SubscriberTemplate {
   protected chain: Text;
   protected api: ApiPromise;
+  protected apiTimeoutMs: number;
   protected endpoint: string;
 
   protected exportDir: string;
@@ -20,6 +22,7 @@ export abstract class SubscriberTemplate {
         cfg: InputConfig,
         protected readonly logger: Logger) {
         this.endpoint = cfg.endpoint;
+        this.apiTimeoutMs = cfg.apiTimeoutMs ? cfg.apiTimeoutMs : apiTimeoutMs
         this.exportDir = cfg.exportDir;
         this.isBucketEnabled = cfg.bucketUpload?.enabled ? cfg.bucketUpload.enabled : false;
         if(this.isBucketEnabled) this._initBucket(cfg.bucketUpload);
@@ -31,8 +34,8 @@ export abstract class SubscriberTemplate {
 
     protected _initAPI = async (): Promise<void> =>{
 
-        const endpoints = this.endpoint.includes("kusama") ? [this.endpoint,'wss://kusama-rpc.polkadot.io'] : [this.endpoint,'wss://rpc.polkadot.io']
-        const provider = new WsProvider(endpoints);
+        const endpoints = [this.endpoint] //one could define more than one endpoint
+        const provider = new WsProvider(endpoints,undefined,undefined,this.apiTimeoutMs);
         this.api = await ApiPromise.create({provider,throwOnConnect:true,throwOnUnknown:true})
         this.api.on('error', (error) => {this.logger.warn("The API has an error"); console.log(error)})
         
