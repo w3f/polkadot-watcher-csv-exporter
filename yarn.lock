@@ -77,10 +77,10 @@
   resolved "https://registry.yarnpkg.com/@google-cloud/promisify/-/promisify-2.0.4.tgz#9d8705ecb2baa41b6b2673f3a8e9b7b7e1abc52a"
   integrity sha512-j8yRSSqswWi1QqUGKVEKOG03Q7qOoZP6/h2zN2YO+F5h2+DHU0bSrHCK9Y7lo2DI9fBd8qGAw795sf+3Jva4yA==
 
-"@google-cloud/storage@^5.18.1":
-  version "5.19.4"
-  resolved "https://registry.yarnpkg.com/@google-cloud/storage/-/storage-5.19.4.tgz#d3377f03b575c66f61e2782ffd0f65419a30ebe0"
-  integrity sha512-Jz7ugcPHhsEmMVvIxM9uoBsdEbKIYwDkh3u07tifsIymEWs47F4/D6+/Tv/W7kLhznqjyOjVJ/0frtBeIC0lJA==
+"@google-cloud/storage@^5.20.5":
+  version "5.20.5"
+  resolved "https://registry.yarnpkg.com/@google-cloud/storage/-/storage-5.20.5.tgz#1de71fc88d37934a886bc815722c134b162d335d"
+  integrity sha512-lOs/dCyveVF8TkVFnFSF7IGd0CJrTm91qiK6JLu+Z8qiT+7Ag0RyVhxZIWkhiACqwABo7kSHDm8FdH8p2wxSSw==
   dependencies:
     "@google-cloud/paginator" "^3.0.7"
     "@google-cloud/projectify" "^2.0.0"
@@ -90,12 +90,10 @@
     async-retry "^1.3.3"
     compressible "^2.0.12"
     configstore "^5.0.0"
-    date-and-time "^2.0.0"
     duplexify "^4.0.0"
     ent "^2.2.0"
     extend "^3.0.2"
     gaxios "^4.0.0"
-    get-stream "^6.0.0"
     google-auth-library "^7.14.1"
     hash-stream-validation "^0.2.2"
     mime "^3.0.0"
@@ -103,9 +101,9 @@
     p-limit "^3.0.1"
     pumpify "^2.0.0"
     retry-request "^4.2.2"
-    snakeize "^0.1.0"
     stream-events "^1.0.4"
     teeny-request "^7.1.3"
+    uuid "^8.0.0"
     xdg-basedir "^4.0.0"
 
 "@humanwhocodes/config-array@^0.5.0":
@@ -1265,11 +1263,6 @@ d@1, d@^1.0.1:
     es5-ext "^0.10.50"
     type "^1.0.1"
 
-date-and-time@^2.0.0:
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/date-and-time/-/date-and-time-2.3.1.tgz#006675ec4943a0a5f85810e3a3fd6aa96f6130c9"
-  integrity sha512-OaIRmSJXifwEN21rMVVDs0Kz8uhJ3wWPYd86atkRiqN54liaMQYEbbrgjZQea75YXOBWL4ZFb3rG/waenw1TEg==
-
 debug@2.6.9, debug@^2.2.0:
   version "2.6.9"
   resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.9.tgz#5d128515df134ff327e90a4c93f4e077a536341f"
@@ -1848,11 +1841,6 @@ get-stream@^5.0.0, get-stream@^5.1.0:
   integrity sha512-nBF+F1rAZVCu/p7rjzgA+Yb4lfYXrpl7a6VmJrU8wF9I1CKvP/QwPNZHnOlwbTkY6dvtFIzFMSyQXbLoTQPRpA==
   dependencies:
     pump "^3.0.0"
-
-get-stream@^6.0.0:
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/get-stream/-/get-stream-6.0.1.tgz#a262d8eef67aced57c2852ad6167526a43cbf7b7"
-  integrity sha512-ts6Wi+2j3jQjqi70w5AlN8DFnkSwC+MqmxEzdEALB2qXZYV3X/b1CTfgPLGJNMeAWxdPfU8FO1ms3NUfaHCPYg==
 
 glob-parent@^5.1.2, glob-parent@~5.1.2:
   version "5.1.2"
@@ -2932,11 +2920,6 @@ slice-ansi@^4.0.0:
     ansi-styles "^4.0.0"
     astral-regex "^2.0.0"
     is-fullwidth-code-point "^3.0.0"
-
-snakeize@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/snakeize/-/snakeize-0.1.0.tgz#10c088d8b58eb076b3229bb5a04e232ce126422d"
-  integrity sha1-EMCI2LWOsHazIpu1oE4jLOEmQi0=
 
 source-map-support@^0.5.17:
   version "0.5.21"
