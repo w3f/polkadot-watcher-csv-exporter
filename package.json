@@ -27,7 +27,7 @@
     "fast-crc32c": "^2.0.0",
     "got": "^10.3.0",
     "prom-client": "^11.5.3",
-    "ws": "^6.1.2"
+    "ws": "^8.0.0"
   },
   "devDependencies": {
     "@types/chai": "^4.3.0",
