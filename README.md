@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/w3f/polkadot-watcher-csv-exporter.svg?style=svg)](https://circleci.com/gh/w3f/polkadot-watcher-csv-exporter)
+[![CircleCI](https://circleci.com/gh/w3f/polkadot-watcher-csv-exporter.svg?style=svg)](https://circleci.com/gh/w3f/polkadot-watcher-csv-exporter) [![Total alerts](https://img.shields.io/lgtm/alerts/g/w3f/polkadot-watcher-csv-exporter.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/w3f/polkadot-watcher-csv-exporter/alerts/) [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/w3f/polkadot-watcher-csv-exporter.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/w3f/polkadot-watcher-csv-exporter/context:javascript)
 
 # polkadot-watcher-csv-exporter
 
