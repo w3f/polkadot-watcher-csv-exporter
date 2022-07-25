@@ -169,8 +169,8 @@ const _buildMyValidatorStaking = async (api: ApiPromise, validatorsStakings: Der
 
 const _getWaitingValidatorsAccountId = async (api: ApiPromise): Promise<string[]> => {
   const skStashes = await api.query.staking.validators.keys()
-  const stashes = skStashes.map(sk => sk.args)
-  const active = await api.query.session.validators();
-  const waiting = stashes.filter((s) => !active.includes(s.toString()));
+  const stashes = skStashes.map(sk => sk.args[0].toString())
+  const active = (await api.query.session.validators()).map(a => a.toString());
+  const waiting = stashes.filter((s) => !active.includes(s));
   return waiting.map(account => account.toString())
 }
