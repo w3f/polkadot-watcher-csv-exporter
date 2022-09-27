@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^5.20.5",
-    "@polkadot/api": "^9.2.2",
+    "@polkadot/api": "^9.4.2",
     "@w3f/config": "^0.1.1",
     "@w3f/logger": "^0.4.2",
     "commander": "^4.0.0",
