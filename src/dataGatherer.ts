@@ -138,6 +138,9 @@ const _getMyWaitingValidatorStaking = async (api: ApiPromise, apiChunkSize: numb
 }
 
 const _buildMyValidatorStaking = async (api: ApiPromise, validatorsStakings: DeriveStakingAccount[], nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure): Promise<MyDeriveStakingAccount[]> =>{
+  const nominatorsStakingsConverted = nominatorsStakings.map( staking => {
+    return {...staking,nominators: staking.nominators.map(nominator => nominator.toHuman()) }
+  }) //necessary to perform the includes comparison that follows
   const myValidatorStaking = Promise.all ( validatorsStakings.map( async validatorStaking => {
 
     const validatorAddress = validatorStaking.accountId
@@ -148,9 +151,9 @@ const _buildMyValidatorStaking = async (api: ApiPromise, validatorsStakings: Der
     const exposure = eraExposures.validators[validatorAddress.toHuman()] ? eraExposures.validators[validatorAddress.toHuman()] : {total:0,own:0,others:[]}
 
     const voters: Voter[] = []
-    for (const staking of nominatorsStakings) {
-      if (staking.nominators.includes(validatorAddress)) {
-        voters.push({address: staking.accountId.toString(), value: staking.stakingLedger.total })
+    for (const staking of nominatorsStakingsConverted) {
+      if(staking.nominators.includes(validatorAddress.toHuman())){  
+        voters.push({address: staking.accountId.toHuman(), value: staking.stakingLedger.total })
       }
     }
 
