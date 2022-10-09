@@ -1,7 +1,7 @@
 /*eslint @typescript-eslint/no-use-before-define: ["error", { "variables": false }]*/
 
 import { DeriveStakingAccount, DeriveEraExposure } from '@polkadot/api-derive/staking/types';
-import { MyDeriveStakingAccount, WriteCSVRequest, ChainData, Voter } from "./types";
+import { MyDeriveStakingAccount, WriteCSVRequest, ChainData, Voter, VotersMap } from "./types";
 import { Logger } from '@w3f/logger';
 import { ApiPromise } from '@polkadot/api';
 import { EraRewardPoints } from '@polkadot/types/interfaces';
@@ -26,6 +26,7 @@ const _handleConnectionRetries = async (f: { (request: WriteCSVRequest, logger: 
     } catch (error) {
       logger.error(`Could not process the Data gathering...`);
       const errorMessage = getErrorMessage(error)
+      logger.error(errorMessage)
       if(
         !errorMessage.includes("Unable to decode using the supplied passphrase") && //there is no way to recover from this
         ++attempts < 5 
@@ -42,23 +43,36 @@ const _handleConnectionRetries = async (f: { (request: WriteCSVRequest, logger: 
 /* eslint-enable  @typescript-eslint/no-explicit-any */
 
 const _gatherData = async (request: WriteCSVRequest, logger: Logger): Promise<ChainData> =>{
+  console.time('_gatherData');
   logger.debug(`gathering some data from the chain...`)
   const {api,apiChunkSize,eraIndex} = request
   const eraPointsPromise = api.query.staking.erasRewardPoints(eraIndex);
   const eraExposures = await api.derive.staking.eraExposure(eraIndex)
   const totalIssuance =  await api.query.balances.totalIssuance()
   const validatorRewardsPreviousEra = (await api.query.staking.erasValidatorReward(eraIndex.sub(new BN(1)))).unwrap();
-  logger.debug(`nominators...`); console.time('get nominators');
+  
+  console.time('get nominators');
+  logger.debug(`nominators...`); 
   const nominatorStakingPromise = _getNominatorStaking(api,apiChunkSize,logger)
   const [nominatorStaking,eraPoints] = [await nominatorStakingPromise, await eraPointsPromise]
   console.timeEnd('get nominators')
-  logger.debug(`validators...`); console.time('get validators')
-  const myValidatorStaking = await _getMyValidatorStaking(api,apiChunkSize,nominatorStaking,eraPoints, eraExposures, logger)
+
+  console.time('build voters map');
+  logger.debug(`voters map...`); 
+  const votersMap = _buildVotersMap(nominatorStaking)
+  console.timeEnd('build voters map')
+
+  console.time('get validators')
+  logger.debug(`validators...`);
+  const myValidatorStaking = await _getMyValidatorStaking(api,apiChunkSize,votersMap,eraPoints, eraExposures, logger)
   console.timeEnd('get validators')
-  logger.debug(`waiting validators...`); console.time('get waiting validators')
-  const myWaitingValidatorStaking = await _getMyWaitingValidatorStaking(api,apiChunkSize,nominatorStaking,eraPoints, eraExposures, logger)
+
+  console.time('get waiting validators')
+  logger.debug(`waiting validators...`); 
+  const myWaitingValidatorStaking = await _getMyWaitingValidatorStaking(api,apiChunkSize,votersMap,eraPoints, eraExposures, logger)
   console.timeEnd('get waiting validators')
 
+  console.timeEnd('_gatherData')
   return {
     eraPoints,
     totalIssuance,
@@ -95,7 +109,7 @@ const _getNominatorStaking = async (api: ApiPromise, apiChunkSize: number, logge
   return nominatorsStakings
 }
 
-const _getMyValidatorStaking = async (api: ApiPromise, apiChunkSize: number, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<MyDeriveStakingAccount[]> =>{
+const _getMyValidatorStaking = async (api: ApiPromise, apiChunkSize: number, voters: VotersMap, eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<MyDeriveStakingAccount[]> =>{
   const validatorsAddresses = await api.query.session.validators();
   logger.debug(`the validator addresses size is ${validatorsAddresses.length}`)
 
@@ -113,10 +127,10 @@ const _getMyValidatorStaking = async (api: ApiPromise, apiChunkSize: number, nom
     validatorsStakings.push(...await api.derive.staking.accounts(chunk))
   }
 
-  return await _buildMyValidatorStaking(api,validatorsStakings,nominatorsStakings,eraPoints,eraExposures)
+  return await _buildMyValidatorStaking(api,validatorsStakings,voters,eraPoints,eraExposures)
 }
 
-const _getMyWaitingValidatorStaking = async (api: ApiPromise, apiChunkSize: number, nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<MyDeriveStakingAccount[]> => {
+const _getMyWaitingValidatorStaking = async (api: ApiPromise, apiChunkSize: number, voters: VotersMap, eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure, logger: Logger): Promise<MyDeriveStakingAccount[]> => {
   const validatorsAddresses = await _getWaitingValidatorsAccountId(api)
   logger.debug(`the waiting validator addresses size is ${validatorsAddresses.length}`)
 
@@ -134,13 +148,10 @@ const _getMyWaitingValidatorStaking = async (api: ApiPromise, apiChunkSize: numb
     validatorsStakings.push(...await api.derive.staking.accounts(chunk))
   }
 
-  return await _buildMyValidatorStaking(api,validatorsStakings,nominatorsStakings,eraPoints,eraExposures)
+  return await _buildMyValidatorStaking(api,validatorsStakings,voters,eraPoints,eraExposures)
 }
 
-const _buildMyValidatorStaking = async (api: ApiPromise, validatorsStakings: DeriveStakingAccount[], nominatorsStakings: DeriveStakingAccount[], eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure): Promise<MyDeriveStakingAccount[]> =>{
-  const nominatorsStakingsConverted = nominatorsStakings.map( staking => {
-    return {...staking,nominators: staking.nominators.map(nominator => nominator.toHuman()) }
-  }) //necessary to perform the includes comparison that follows
+const _buildMyValidatorStaking = async (api: ApiPromise, validatorsStakings: DeriveStakingAccount[], votersMap: VotersMap, eraPoints: EraRewardPoints, eraExposures: DeriveEraExposure): Promise<MyDeriveStakingAccount[]> =>{
   const myValidatorStaking = Promise.all ( validatorsStakings.map( async validatorStaking => {
 
     const validatorAddress = validatorStaking.accountId
@@ -149,13 +160,8 @@ const _buildMyValidatorStaking = async (api: ApiPromise, validatorsStakings: Der
     const validatorEraPoints = eraPoints.toJSON()['individual'][validatorAddress.toHuman()] ? eraPoints.toJSON()['individual'][validatorAddress.toHuman()] : 0
 
     const exposure = eraExposures.validators[validatorAddress.toHuman()] ? eraExposures.validators[validatorAddress.toHuman()] : {total:0,own:0,others:[]}
-
-    const voters: Voter[] = []
-    for (const staking of nominatorsStakingsConverted) {
-      if(staking.nominators.includes(validatorAddress.toHuman())){  
-        voters.push({address: staking.accountId.toHuman(), value: staking.stakingLedger.total })
-      }
-    }
+        
+    const voters: Voter[] = votersMap.has(validatorAddress.toHuman()) ? votersMap.get(validatorAddress.toHuman()) : []
 
     const {identity} = await infoPromise
     return {
@@ -176,4 +182,26 @@ const _getWaitingValidatorsAccountId = async (api: ApiPromise): Promise<string[]
   const active = (await api.query.session.validators()).map(a => a.toString());
   const waiting = stashes.filter((s) => !active.includes(s));
   return waiting.map(account => account.toString())
+}
+
+const _buildVotersMap = (nominatorsStakings: DeriveStakingAccount[]): VotersMap => {
+
+  const voters: VotersMap = new Map<string,Voter[]>()
+  nominatorsStakings.forEach( nominator => {
+    nominator.nominators.forEach ( nominated => {
+      const key = nominated.toHuman()
+      const value = {
+        address: key,
+        value: nominator.stakingLedger.total
+      }
+      if (voters.has(key)){
+        voters.get(key).push(value)
+      }
+      else{
+        voters.set(key,[value])
+      }
+    })
+  })
+
+  return voters
 }
