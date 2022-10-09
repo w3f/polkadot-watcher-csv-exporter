@@ -54,6 +54,7 @@ export interface Voter {
   address: string;
   value: Compact<Balance>;
 }
+export type VotersMap = Map<string,Voter[]>
 
 export interface WriteCSVRequest{
   api: ApiPromise;
