@@ -191,7 +191,7 @@ const _buildVotersMap = (nominatorsStakings: DeriveStakingAccount[]): VotersMap 
     nominator.nominators.forEach ( nominated => {
       const key = nominated.toHuman()
       const value = {
-        address: key,
+        address: nominator.accountId.toHuman(),
         value: nominator.stakingLedger.total
       }
       if (voters.has(key)){
