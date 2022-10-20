@@ -1,5 +1,5 @@
 description: Polkadot Watcher
 name: polkadot-watcher-csv-exporter
-version: v0.10.20
-appVersion: v0.10.20
+version: v1.0.0
+appVersion: v1.0.0
 apiVersion: v2
