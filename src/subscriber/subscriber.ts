@@ -124,10 +124,10 @@ export class Subscriber extends SubscriberTemplate implements ISubscriber {
     private  _writeCSVHandler = async (header: Header): Promise<void> =>{
       if(this._isCSVWriteLocked()) return
 
-      const deriveSessionProgress = await this.api.derive.session.progress();    
+      const deriveSessionProgress = await this.api.derive.session.progress();
 
       if (!this.config.sessionOnly == true && await this._isEndEraBlock(deriveSessionProgress)) {
-        this.logger.info(`starting the CSV writing for the session ${deriveSessionProgress.currentIndex} and the era ${deriveSessionProgress.currentEra}`)
+        this.logger.info(`starting the CSV writing for the session ${deriveSessionProgress.currentIndex} and the era ${deriveSessionProgress.activeEra}`)
 
         this._lockCSVWrite()
         await this._writeEraCSV(deriveSessionProgress.activeEra, deriveSessionProgress.currentIndex, header.number)
@@ -139,7 +139,7 @@ export class Subscriber extends SubscriberTemplate implements ISubscriber {
         this.logger.info(`starting the CSV writing for the session ${deriveSessionProgress.currentIndex}`)
         
         this._lockCSVWrite()
-        await this._writeSessionCSV(deriveSessionProgress.currentEra, deriveSessionProgress.currentIndex, header.number); 
+        await this._writeSessionCSV(deriveSessionProgress.activeEra, deriveSessionProgress.currentIndex, header.number); 
         this._setCSVUploadable(true)
       }
     }
