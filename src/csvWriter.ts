@@ -83,7 +83,7 @@ const _writeFileNominatorSession = (file: WriteStream, request: WriteNominatorCS
   file.write(`era,session,last_session,block_number,stash_address,controller_address,bonded_amount,num_targets,targets\n`);
   for (const staking of nominatorStaking) {
     const numTargets = staking.nominators ? staking.nominators.length : 0;
-    file.write(`${eraIndex},${sessionIndex},${isEndEraBlock ? isEndEraBlock : 0},${blockNumber},${staking.accountId},${staking.controllerId},${staking.stakingLedger.total},${numTargets},"${staking.nominators.join(`,`)}"\n`);
+    file.write(`${eraIndex},${sessionIndex},${isEndEraBlock ? 1 : 0},${blockNumber},${staking.accountId},${staking.controllerId},${staking.stakingLedger.total},${numTargets},"${staking.nominators.join(`,`)}"\n`);
   }
 }
 
@@ -106,12 +106,12 @@ const _writeFileValidatorSession = (file: WriteStream, request: WriteValidatorCS
   const { eraIndex, sessionIndex, isEndEraBlock, blockNumber, myValidatorStaking, myWaitingValidatorStaking, totalIssuance, validatorRewardsPreviousEra } = request
   file.write(`era,session,last_session,block_number,active,name,stash_address,controller_address,commission_percent,self_stake,total_stake,num_stakers,stakers,num_voters,voters,era_points,total_issuance,validator_rewards_previous_era\n`);
   for (const staking of myValidatorStaking) {
-    file.write(`${eraIndex},${sessionIndex ? sessionIndex : -1},${isEndEraBlock ? isEndEraBlock : 0},${blockNumber ? blockNumber : -1},${1},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},"${staking.exposure.others.map(staker=>staker.who+';'+staker.value).join(`,`)}",${staking.voters.length},"${staking.voters.map(staker=>staker.address+';'+staker.value).join(`,`)}",${staking.eraPoints},${totalIssuance},${validatorRewardsPreviousEra}\n`);
+    file.write(`${eraIndex},${sessionIndex ? sessionIndex : -1},${isEndEraBlock ? 1 : 0},${blockNumber ? blockNumber : -1},${1},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.exposure.own},${staking.exposure.total},${staking.exposure.others.length},"${staking.exposure.others.map(staker=>staker.who+';'+staker.value).join(`,`)}",${staking.voters.length},"${staking.voters.map(staker=>staker.address+';'+staker.value).join(`,`)}",${staking.eraPoints},${totalIssuance},${validatorRewardsPreviousEra}\n`);
   }
   if(myWaitingValidatorStaking){
     // total vs active: polkadojs is displaying total as the total and the own stake for the waiting set validators
     for (const staking of myWaitingValidatorStaking) {
-      file.write(`${eraIndex},${sessionIndex ? sessionIndex : -1},${blockNumber ? blockNumber : -1},${0},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.stakingLedger.total},${staking.stakingLedger.total},${staking.exposure.others.length},"${staking.exposure.others.map(staker=>staker.who+';'+staker.value).join(`,`)}",${staking.voters.length},"${staking.voters.map(staker=>staker.address+';'+staker.value).join(`,`)}",${staking.eraPoints},${totalIssuance},${validatorRewardsPreviousEra}\n`);
+      file.write(`${eraIndex},${sessionIndex ? sessionIndex : -1},${isEndEraBlock ? 1 : 0},${blockNumber ? blockNumber : -1},${0},${staking.displayName},${staking.accountId},${staking.controllerId},${(parseInt(staking.validatorPrefs.commission.toString()) / 10000000).toFixed(2)},${staking.stakingLedger.total},${staking.stakingLedger.total},${staking.exposure.others.length},"${staking.exposure.others.map(staker=>staker.who+';'+staker.value).join(`,`)}",${staking.voters.length},"${staking.voters.map(staker=>staker.address+';'+staker.value).join(`,`)}",${staking.eraPoints},${totalIssuance},${validatorRewardsPreviousEra}\n`);
     }
   }
 }
