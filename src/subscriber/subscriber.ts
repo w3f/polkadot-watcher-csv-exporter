@@ -181,7 +181,7 @@ export class Subscriber extends SubscriberTemplate implements ISubscriber {
 
     }
 
-    private _writeSessionCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>, isEndEraBlock: boolean = false): Promise<void> => {
+    private _writeSessionCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>, isEndEraBlock = false): Promise<void> => {
       const network = this.chain.toString().toLowerCase()
       const request = {api:this.api,network,apiChunkSize:this.apiChunkSize,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
       const chainData = await gatherChainData(request, this.logger)
