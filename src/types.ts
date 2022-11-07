@@ -63,6 +63,7 @@ export interface WriteCSVRequest{
   exportDir: string; 
   eraIndex: EraIndex; 
   sessionIndex: SessionIndex; 
+  isEndEraBlock?: boolean;
   blockNumber: Compact<BlockNumber>;
   totalIssuance?: Balance;
   validatorRewardsPreviousEra?: BalanceOf;
@@ -94,6 +95,7 @@ export interface ChainData {
   eraIndex?: EraIndex;
   sessionIndex?: SessionIndex;
   blockNumber?: Compact<BlockNumber>;
+  isEndEraBlock?: boolean;
   eraPoints: EraRewardPoints;
   totalIssuance: Balance;
   validatorRewardsPreviousEra: BalanceOf;

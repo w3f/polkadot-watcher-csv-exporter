@@ -126,11 +126,14 @@ export class Subscriber extends SubscriberTemplate implements ISubscriber {
 
       const deriveSessionProgress = await this.api.derive.session.progress();
 
-      if (!this.config.sessionOnly == true && await this._isEndEraBlock(deriveSessionProgress)) {
-        this.logger.info(`starting the CSV writing for the session ${deriveSessionProgress.currentIndex} and the era ${deriveSessionProgress.activeEra}`)
+      const isEndEraBlock = await this._isEndEraBlock(deriveSessionProgress)
+      if (isEndEraBlock) {
+        this.logger.info(`starting the CSV writing for the session ${deriveSessionProgress.currentIndex}, ending of the era ${deriveSessionProgress.activeEra}`)
 
         this._lockCSVWrite()
-        await this._writeEraCSV(deriveSessionProgress.activeEra, deriveSessionProgress.currentIndex, header.number)
+        this.config.sessionOnly ? 
+          await this._writeSessionCSV(deriveSessionProgress.activeEra, deriveSessionProgress.currentIndex, header.number, isEndEraBlock) :
+            await this._writeEraCSV(deriveSessionProgress.activeEra, deriveSessionProgress.currentIndex, header.number)
         this._setCSVUploadable(true)
       }
 
@@ -178,21 +181,22 @@ export class Subscriber extends SubscriberTemplate implements ISubscriber {
 
     }
 
-    private _writeSessionCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> => {
+    private _writeSessionCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>, isEndEraBlock: boolean = false): Promise<void> => {
       const network = this.chain.toString().toLowerCase()
       const request = {api:this.api,network,apiChunkSize:this.apiChunkSize,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
       const chainData = await gatherChainData(request, this.logger)
+      chainData.isEndEraBlock = isEndEraBlock
       await writeSessionCSV(request, chainData, this.logger)
     }
 
     private _isEndEraBlock = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{
 
-      if (await this._isEraChanging(deriveSessionProgress)) return false
+      if (await this._isEraOutOfSync(deriveSessionProgress)) return false
 
       return deriveSessionProgress.eraLength.toNumber() - deriveSessionProgress.eraProgress.toNumber() < this.progress_delta
     }
 
-    private _isEraChanging = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{
+    private _isEraOutOfSync = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{
       if (deriveSessionProgress.activeEra > this.eraIndex){
         await this._handleEraChange(deriveSessionProgress.activeEra, deriveSessionProgress.currentIndex)
         return true
@@ -207,14 +211,14 @@ export class Subscriber extends SubscriberTemplate implements ISubscriber {
 
     private _isEndSessionBlock = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{
       
-      if(await this._isSessionChanging(deriveSessionProgress)) return false
+      if(await this._isSessionOutOfSync(deriveSessionProgress)) return false
 
       //it starts to write from the last few blocks of the session, just to be sure to not loose any session data being the deriveSessionProgress.sessionProgress not fully reliable.
       //Unfortunatly it not always reach the very last block and it may jumps directly to the next session.
       return deriveSessionProgress.sessionLength.toNumber() - deriveSessionProgress.sessionProgress.toNumber() < this.progress_delta
     }
 
-    private _isSessionChanging = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{
+    private _isSessionOutOfSync = async (deriveSessionProgress: DeriveSessionProgress): Promise<boolean> =>{
       if(deriveSessionProgress.currentIndex > this.sessionIndex) {
         await this._handleSessionChange(deriveSessionProgress.currentIndex)
         return true
