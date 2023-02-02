@@ -117,8 +117,8 @@ export class SubscriberEraScanner extends SubscriberTemplate implements ISubscri
     private _writeEraCSVHistoricalSpecific = async (era: number): Promise<void> => {
       const network = this.chain.toString().toLowerCase()
       const eraIndex = this.api.createType("EraIndex",era)
-
-      const request = {api:this.api,network,exportDir:this.exportDir,eraIndexes:[eraIndex]}
+      const timestamp = (await this.api.query.timestamp.now()).toString()
+      const request = {timestamp,api:this.api,network,exportDir:this.exportDir,eraIndexes:[eraIndex]}
       const chainData = await gatherChainDataHistorical(request, this.logger)
       await writeHistoricErasCSV(request, chainData, this.logger)
     }
