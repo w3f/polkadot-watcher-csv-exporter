@@ -4,9 +4,9 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ include "app.name" . }}
   labels:
-    app: {{ .Release.Name }}
+    app: {{ include "app.name" . }}
 spec:
   replicas: 1
   revisionHistoryLimit: 3
@@ -14,17 +14,17 @@ spec:
     type: RollingUpdate
   selector:
     matchLabels:
-      app: {{ .Release.Name }}
-  serviceName: {{ .Release.Name }}
+      app: {{ include "app.name" . }}
+  serviceName: {{ include "app.name" . }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}
+        app: {{ include "app.name" . }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}  
     spec:
       containers:
-      - name: {{ .Release.Name }}
+      - name: {{ include "app.name" . }}
         image: {{ .Values.image.repo }}:{{ .Values.image.tag | default .Chart.AppVersion }}
         imagePullPolicy: {{ .Values.image.pullPolicy | default "Always" }}
         args:
@@ -60,10 +60,10 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: {{ .Release.Name }}  
+          name: {{ include "app.name" . }}
       - name: service-account
         secret:
-          secretName: {{ .Release.Name }}
+          secretName: {{ include "app.name" . }}
           items:
           - key: service_account_json
             path: {{ base .Values.config.bucketUpload.gcpServiceAccount }}    
