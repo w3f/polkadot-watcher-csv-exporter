@@ -57,6 +57,7 @@ export interface Voter {
 export type VotersMap = Map<string,Voter[]>
 
 export interface WriteCSVRequest{
+  timestamp: string;
   api: ApiPromise;
   apiChunkSize: number;
   network: string; 
@@ -70,6 +71,7 @@ export interface WriteCSVRequest{
 }
 
 export interface WriteCSVHistoricalRequest{
+  timestamp: string;
   api: ApiPromise;
   network: string; 
   exportDir: string; 

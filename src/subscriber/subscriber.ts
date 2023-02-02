@@ -17,6 +17,8 @@ export class Subscriber extends SubscriberTemplate implements ISubscriber {
 
     private config: InputConfig
 
+    private timestamp: string;
+
     private apiChunkSize: number;
 
     private isInitialWriteForced: boolean;
@@ -65,6 +67,7 @@ export class Subscriber extends SubscriberTemplate implements ISubscriber {
     }
 
     private _initInstanceVariables = async (): Promise<void> =>{
+      this.timestamp = (await this.api.query.timestamp.now()).toString()
       this.sessionIndex = await this.api.query.session.currentIndex();
       this.eraIndex = (await this.api.query.staking.activeEra()).unwrap().index;
       this._setCSVUploadable(false)
@@ -85,6 +88,7 @@ export class Subscriber extends SubscriberTemplate implements ISubscriber {
 
       this.api.rpc.chain.subscribeNewHeads(async (header) => {
        
+        
         await this._writeCSVHandler(header)
 
         await this._uploadCSVHandler()
@@ -149,7 +153,7 @@ export class Subscriber extends SubscriberTemplate implements ISubscriber {
 
     private _writeEraCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>): Promise<void> => {
       const network = this.chain.toString().toLowerCase()
-      const request = {api:this.api,network,apiChunkSize:this.apiChunkSize,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
+      const request = {timestamp:this.timestamp,api:this.api,network,apiChunkSize:this.apiChunkSize,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
       const chainData = await gatherChainData(request, this.logger)
       await writeSessionCSV(request, chainData, this.logger)
       await writeEraCSV(request, chainData, this.logger)
@@ -174,7 +178,7 @@ export class Subscriber extends SubscriberTemplate implements ISubscriber {
       
       for (const chunk of eraIndexesChucked) {
         this.logger.debug(`the handled chunk size is ${chunk.length}`)
-        const request = {api:this.api,network,exportDir:this.exportDir,eraIndexes:chunk}
+        const request = {timestamp:this.timestamp,api:this.api,network,exportDir:this.exportDir,eraIndexes:chunk}
         const chainData = await gatherChainDataHistorical(request, this.logger)
         await writeHistoricErasCSV(request, chainData, this.logger)
       }
@@ -183,7 +187,7 @@ export class Subscriber extends SubscriberTemplate implements ISubscriber {
 
     private _writeSessionCSV = async (eraIndex: EraIndex, sessionIndex: SessionIndex, blockNumber: Compact<BlockNumber>, isEndEraBlock = false): Promise<void> => {
       const network = this.chain.toString().toLowerCase()
-      const request = {api:this.api,network,apiChunkSize:this.apiChunkSize,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
+      const request = {timestamp:this.timestamp,api:this.api,network,apiChunkSize:this.apiChunkSize,exportDir:this.exportDir,eraIndex,sessionIndex,blockNumber}
       const chainData = await gatherChainData(request, this.logger)
       chainData.isEndEraBlock = isEndEraBlock
       await writeSessionCSV(request, chainData, this.logger)
