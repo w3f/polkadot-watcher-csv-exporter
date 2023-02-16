@@ -88,8 +88,7 @@ spec:
   accessModes:
     - ReadWriteOnce
   resources:
-    requests:
-      storage: 256Mi
+    {{- toYaml .Values.resources | nindent 14 }}
 {{ end }}      
 
 

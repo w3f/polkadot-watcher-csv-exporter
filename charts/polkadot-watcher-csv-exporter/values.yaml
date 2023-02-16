@@ -46,6 +46,7 @@ resources:
   requests:
     cpu: "600m"
     memory: "1Gi"
+    storage: "2Gi"
   limits:
     cpu: "2000m"
     memory: "2Gi" 
